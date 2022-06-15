@@ -66,7 +66,9 @@ outputpath = 'C:\\Users\\'+currID+'\\Desktop\\PDFDrop\\'
 clear_destination_folder(outputpath)
 
 # set up format of manifest for ContentVersion
-contentVersion = pd.DataFrame(columns=['Title', 'Description', 'VersionData',
+contentVersion = pd.DataFrame(columns=['Title',
+                                       'Description',
+                                       'VersionData',
                                        'PathOnClient',
                                        'FirstPublishLocationId'])
 # get account IDs by SCEIS code from Salesforce csv
@@ -110,33 +112,52 @@ for p in pdf_location:
     invoiceno = str(df.iloc[0, 4])[:-2]
     invoiceamt = str(df.iloc[len(df)-1, 10])
     # rebuild date for sort
-    tdate = '20'+pdate[-2:] + '-' + pdate[:2] + '-' + pdate[3:5]
+    tdate = '20'\
+            + pdate[-2:] + '-'\
+            + pdate[:2] + '-'\
+            + pdate[3:5]
     gendate = datestamp
     filename = p
 
     # outputpath = pdfdrop
     customername = str(df.iloc[0, 2])
-    titledate = tdate + ' - ' + invoiceamt + ' - ' + customername +\
-        ' - Invoice ' + invoiceno + ' - Shared Services'
-    printfilename = agycode + ' Invoice Date ' + pdate
-    desc = 'S&D Billing for services on ' + pdate + '. Generated on ' +\
-        gendate
+    titledate = tdate + ' - ' +\
+        invoiceamt + ' - '\
+        + customername\
+        + ' - Invoice '\
+        + invoiceno +\
+        ' - Shared Services'
+    printfilename = agycode\
+        + ' Invoice Date '\
+        + pdate
+    desc = 'S&D Billing for services on '\
+        + pdate\
+        + '. Generated on '\
+        + gendate
 
     # gets Salesforce ID for account
     idofaccount = acctid_dict[agycode]
 
     # generating ContentVersion manifest
-    nextentry = pd.Series([titledate, desc, outputpath + filename,
-                           outputpath + filename, idofaccount],
+    nextentry = pd.Series([titledate,
+                          desc,
+                          outputpath + filename,
+                          outputpath + filename,
+                          idofaccount],
                           index=contentVersion.columns)
     contentVersion = contentVersion.append(nextentry, ignore_index=True)
 
-    print('Logging ' + printfilename + ' '
-          + invoiceno + ' - doc id - ' + filename)
+    print('Logging '
+          + printfilename + ' '
+          + invoiceno + ' - doc id - '
+          + filename)
 
 print('Creating manifest for ContentVersion')
-contentVersion.to_csv(outputpath + 'ContentVersion Generated On ' + datestamp
-                      + '.csv', index=False)
+contentVersion.to_csv(outputpath
+                      + 'ContentVersion Generated On '
+                      + datestamp
+                      + '.csv',
+                      index=False)
 copyFileMap(root+'\\pdfimportmap.sdl', outputpath+'\\pdfimportmap.sdl')
 
 print('Operation Complete!')

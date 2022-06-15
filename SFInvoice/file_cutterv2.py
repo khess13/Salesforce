@@ -1,4 +1,3 @@
-
 import pandas as pd
 import datetime as dt
 import os
@@ -131,9 +130,8 @@ BAgys = {'E240': 'EMERGENCY',
 # 'R230' : 'CONSUMER FINANCE' because everything is different for this
 
 # root will get current working directory
-# root = os.getcwd()
 root = str(Path(os.getcwd()).parents[0]) + "\\"
-#  dependent file
+#  dependent files
 account_loc = root + '\\extract.csv'
 datestamp = str(dt.datetime.now().strftime('%m-%d-%Y'))
 
@@ -186,11 +184,9 @@ for x in xlsx:
     # create list of agy/cust codes
     agycodes = agy['AgyCode'].drop_duplicates().tolist()
 
-    '''2021-04-13 DTO Invoice output changed, does not include
-       wiring or network charges?'''
+    # labeling blank lines to mark one time charges
     agy.loc[(agy['Contract Desc.'].isnull()),
             'Contract Desc.'] = 'One Time Charge'
-    '''End changes'''
 
     for key, value in BAgys.items():
         bkey = key + 'B'
@@ -256,22 +252,35 @@ for x in xlsx:
                 # file identifiers
                 invoiceno = str(sub3df.iloc[0, 4])[:-2]  # remove .0
                 invoiceamt = float_format(round(sub3df['Net Value'].sum(), 2))
-                tdate = '20'+pdate[-2:] + '-' + pdate[:2] + '-' + pdate[3:5]
+                tdate = '20'+pdate[-2:]\
+                        + '-' + pdate[:2]\
+                        + '-' + pdate[3:5]
 
-                filename = tdate + ' - ' + invoiceamt + ' - ' + str(cont) +\
-                    ' - Shared Services.xlsx'
-                titledate = tdate + ' - ' + invoiceamt + ' - ' + desc +\
-                    ' - Shared Services'
-                printfilename = agycode + ' Invoice Date ' + pdate + ' ' + desc
+                filename = tdate + ' - '\
+                    + invoiceamt + ' - '\
+                    + str(cont)\
+                    + ' - Shared Services.xlsx'
+                titledate = tdate + ' - '\
+                    + invoiceamt + ' - '\
+                    + desc\
+                    + ' - Shared Services'
+                printfilename = agycode +\
+                    ' Invoice Date ' +\
+                    pdate + ' ' +\
+                    desc
 
                 # gets Salesforce ID for account
                 idofaccount = acctid_dict[agycode]
                 # generating ContentVersion manifest
-                nextentry = pd.Series([titledate, desc, outputpath + filename,
-                                       outputpath + filename, idofaccount],
+                nextentry = pd.Series([titledate,
+                                       desc,
+                                       outputpath + filename,
+                                       outputpath + filename,
+                                       idofaccount],
                                       index=contentVersion.columns)
                 contentVersion = contentVersion.append(
-                    nextentry, ignore_index=True)
+                                                nextentry,
+                                                ignore_index=True)
 
                 # export file to excel file and save
                 with pd.ExcelWriter(outputpath + filename) as writer:
@@ -279,7 +288,9 @@ for x in xlsx:
                 print('Creating ' + filename)
 
 print('Creating manifest for ContentVersion')
-contentVersion.to_csv(outputpath + 'ContentVersion Generated On ' + datestamp
+contentVersion.to_csv(outputpath
+                      + 'ContentVersion Generated On '
+                      + datestamp
                       + '.csv', index=False)
 
 copyFileMap(root+'\\pdfimportmap.sdl', outputpath+'\\pdfimportmap.sdl')

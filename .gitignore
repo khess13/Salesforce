@@ -1,0 +1,20 @@
+__pycache__/
+ChangeMgmt/
+Cloud/
+DR/
+DSS Report/
+Email Survey/
+Exchange/
+Infrastructure/
+Text/
+util/
+SFInvoice/__pycache__/
+Headcount/
+DTO Services/
+
+*.xls
+*.xlsx
+*.sdl
+*.csv
+*.pdf
+*.gif

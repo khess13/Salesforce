@@ -28,7 +28,7 @@ def clear_destination_folder(filepath):
     try:
         shutil.rmtree(filepath)
         os.mkdir(filepath)
-    except OSError:  # not sure if this is right
+    except:
         os.mkdir(filepath)
 
 
@@ -152,7 +152,7 @@ contentVersion = pd.DataFrame(columns=['Title', 'Description', 'VersionData',
 # get account IDs by SCEIS code from Salesforce csv
 try:
     accountids = pd.read_csv(account_loc)
-except OSError:
+except:
     print('extract.csv is missing from parent directory')
 
 # build dictionary because i don't know how to do this right
@@ -209,12 +209,12 @@ for x in xlsx:
         # create subset of original data
         subdf = agy[agy['AgyCode'] == agyc].copy()
         # get all contract numbers in agy
-        salescontract = subdf['Sales Contract# '].drop_duplicates().tolist()
+        salescontract = subdf['Sales Contract#'].drop_duplicates().tolist()
         # determine total number of posting dates in agy
         postingdaterange = subdf['Posting Date'].drop_duplicates().tolist()
 
         for cont in salescontract:
-            sub2df = subdf[subdf['Sales Contract# '] == cont].copy()
+            sub2df = subdf[subdf['Sales Contract#'] == cont].copy()
             if sub2df.empty:
                 continue
             for date in postingdaterange:
@@ -244,7 +244,7 @@ for x in xlsx:
                     if contractdesclist[0] == 'One Time Charge':
                         try:
                             desc = contractdesclist[1]
-                        except OSError:
+                        except:
                             desc = contractdesclist[0]
                     else:
                         desc = contractdesclist[0]

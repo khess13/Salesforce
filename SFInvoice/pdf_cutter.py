@@ -29,7 +29,7 @@ def clear_destination_folder(filepath):
     try:
         shutil.rmtree(filepath)
         os.mkdir(filepath)
-    except OSError:
+    except:
         os.mkdir(filepath)
 
 
@@ -41,7 +41,7 @@ def agycode_cleaner(agycode) -> str:
         # remove .0; 0 values after decimal f = float
         newCode = '{:0.0f}'.format(agycode)
         return newCode
-    except OSError:
+    except:
         return str(agycode)
 
 
@@ -55,7 +55,7 @@ root = str(Path(os.getcwd()).parents[0]) + "\\"
 #  dependent file
 try:
     account_loc = root + '\\extract.csv'
-except OSError:
+except:
     print("extract.csv is missing from parent directory")
 
 datestamp = str(dt.datetime.now().strftime('%m-%d-%Y'))

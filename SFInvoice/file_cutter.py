@@ -31,7 +31,7 @@ def clear_destination_folder(filepath):
     except:
         os.mkdir(filepath)
 
-
+# TODO -- remove logic for C+
 def create_AgyCode(data) -> str:
     # logic for coding county entries
     # groups counties, skips changing cities/towns (leaves customer no alone)
@@ -57,16 +57,16 @@ def create_AgyCode(data) -> str:
     elif custno[:1].isalpha():
         sc = custno[:4]
         return sc
-    # to include SCI
-    elif '4002294' in custno:
-        return '4002294'
     # city of columbia variations
     elif 'CITY OF COLUMBIA' in customer:
-        return 'c0002160000'  # because there's multiple acct numbers
-    # supreme court, riverbanks
+        return '2160000'  # because there's multiple acct numbers
+    # return numerical acct number for these non-SCEIS accts
     elif customer in ['SUPREME COURT COMMISSION ON CLE',
-                      'RIVERBANKS ZOO & GARDEN']:
-        return 'c'+custno
+                      'RIVERBANKS ZOO & GARDEN',
+                      'SOUTH CAROLINA INTERACTIVE',
+                      'SC EDUCATION LOTTERY COMM']:
+        # trim off beginning 000
+        return str(custno)[3:]
     # other cities and towns
     elif customer.startswith('CITY OF') or customer.startswith('TOWN OF'):
         return 'zzz'  # 'c'+custno
@@ -86,9 +86,6 @@ def create_AgyCode(data) -> str:
          'DISTRICT' in customer or\
          'SCH DIST' in customer:
         return 'zzz'
-    # sc lotter commission
-    elif customer == 'SC EDUCATION LOTTERY COMM':
-        return 'c'+custno
     # counties that are the same shortned, had to make them different
     elif firstword in countywhylist:
         x = countywhy.get(firstword)
@@ -168,8 +165,8 @@ for x in xlsx:
     xdf = pd.read_excel(x)
 
     # change customer field to str
-    xdf['Customer'] = xdf['Customer'].apply(lambda x: str(x))
 
+    xdf['Customer'] = xdf['Customer'].apply(lambda x: str(x))
     xdf.dropna(subset=['Customer Name'], inplace=True)
     agy = xdf.copy()
 

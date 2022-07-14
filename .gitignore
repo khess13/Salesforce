@@ -11,6 +11,7 @@ util/
 SFInvoice/__pycache__/
 Headcount/
 DTO Services/
+Meetings/
 
 *.xls
 *.xlsx

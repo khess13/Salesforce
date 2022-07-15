@@ -31,7 +31,7 @@ def clear_destination_folder(filepath):
     except:
         os.mkdir(filepath)
 
-# TODO -- remove logic for C+
+
 def create_AgyCode(data) -> str:
     # logic for coding county entries
     # groups counties, skips changing cities/towns (leaves customer no alone)
@@ -64,7 +64,8 @@ def create_AgyCode(data) -> str:
     elif customer in ['SUPREME COURT COMMISSION ON CLE',
                       'RIVERBANKS ZOO & GARDEN',
                       'SOUTH CAROLINA INTERACTIVE',
-                      'SC EDUCATION LOTTERY COMM']:
+                      'SC EDUCATION LOTTERY COMM',
+                      'SC BAR CLE DIVISION']:
         # trim off beginning 000
         return str(custno)[3:]
     # other cities and towns
@@ -80,7 +81,7 @@ def create_AgyCode(data) -> str:
     elif customer in ['GOOSE CREEK CC/911',
                       'COLUMBIA-RICHLAND 911 COMMUNICATION',
                       'CALHOUN FALLS HIGH', 'GREENWOOD COUNTY SCH.DIST. 50']:
-        return 'zzz'  # 'c'+custno
+        return 'zzz'
     # remove school districts
     elif 'SCHOOL' in customer or\
          'DISTRICT' in customer or\

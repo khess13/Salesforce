@@ -1,4 +1,5 @@
 import os
+import re
 import pandas as pd
 import datetime as dt
 import pathlib import Path
@@ -22,16 +23,20 @@ PROPER_COUNTY_LIST = ['Abbeville', 'Aiken', 'Allendale', 'Anderson', 'Bamberg',
                  'Lexington', 'Marion', 'Marlboro', 'McCormick', 'Newberry',
                  'Oconee', 'Orangeburg', 'Pickens', 'Richland', 'Saluda',
                  'Spartanburg', 'Sumter', 'Union', 'Williamsburg', 'York']
-UPPER_COUNTY_LIST = [x.upper() for x in PROPER_COUNTY]
+UPPER_COUNTY_LIST = [x.upper() for x in PROPER_COUNTY_LIST]
+# TODO - may not need this anymore
 # exceptions for algo fail
 EXCEPTION_COUNTY = {'CHESTER': 'CHETCO', 'CHESTERFIELD': 'CHEKCO',
                     'CHEROKEE': 'CHERCO', 'GREENVILLE': 'GREVCO',
                     'GREENWOOD': 'GREWCO'}
 EXCEPTION_COUNTY_LIST = list(EXCEPTION_COUNTY.keys())
+# TODO - how true is this now since contract desc is replacing??
 COUNTY_EXCEPTION_WORD_LIST = ['POLICE', 'PUBLIC SAFETY','PUBLIC SFTY',
                               'GOOSE CREEK CC/911','CALHOUN FALLS HIGH',
                               'GREENWOOD COUNTY SCH.DIST. 50','SCHOOL',
                               'DISTRICT','SCH DIST']
+# re pattern for xxxx co/county
+RE_COUNTY = re.compile(r'^[A-Z]+\W{1}CO[A-Z]*')
 # keyword in contract description for subset agencies
 B_AGYS = {'E240': 'EMERGENCY',
           'H630': 'FIRST STEPS',
@@ -94,21 +99,27 @@ def create_acct_code(data) -> str:
 
     # city of columbia acct and supreme court have the same sequence
     if customer_number_first_four == '2160':
+        # supreme ct
         if customer_number[-2:] == '16':
             return customer_number
         else:
+            # city of columbia
             return '2160000'
 
     # other numerical accounts
-    if customer in ['RIVERBANKS ZOO',
-                    'SC INTERACTIVE',
-                    'SC EDUCATION LOTTERY',
-                    'SC BAR ASSOCIATION',
-                    'SC BAR ASSOCIATION - NON-BILLABLE']:
+    if contract_desc in ['RIVERBANKS ZOO',
+                        'SC INTERACTIVE',
+                        'SC EDUCATION LOTTERY',
+                        'SC BAR ASSOCIATION',
+                        'SC BAR ASSOCIATION - NON-BILLABLE']:
         return customer_number
 
-    if first_word in UPPER_COUNTY_LIST:
-        # TODO - finish logic for county exceptions 
+    # counties -- TODO this new logic should work
+    if re.search(RE_COUNTY,contract_desc):
+        if first_word in COUNTY_EXCEPTION_WORD_LIST:
+            return EXCEPTION_COUNTY.get(first_word)
+        else:
+            return firstword[:4]+'CO'
 
 def material_translate(material) -> str:
     # summarizes what it is in less than 3 words

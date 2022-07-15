@@ -18,6 +18,8 @@ def get_files_from_dir(filepath, ext='.XLSX') -> list:
     xlsxfiles = [root + f for f in filesindir if ext in f and '~' not in f]
     if len(xlsxfiles) == 0:
         print('No files found, try checking the extension.')
+    elif len(xlsxfiles) > 1:
+        print('Found more than 1 excel file. Check directory.')
     else:
         return xlsxfiles
 

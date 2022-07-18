@@ -18,8 +18,10 @@ def get_files_from_dir(filepath, ext='.XLSX') -> list:
     xlsxfiles = [root + f for f in filesindir if ext in f and '~' not in f]
     if len(xlsxfiles) == 0:
         print('No files found, try checking the extension.')
+        return list()
     elif len(xlsxfiles) > 1:
-        print('Found more than 1 excel file. Check directory.')
+        print('WARNING: Multiple files being processed')
+        return xlsxfiles
     else:
         return xlsxfiles
 
@@ -168,7 +170,6 @@ for x in xlsx:
     xdf = pd.read_excel(x)
 
     # change customer field to str
-
     xdf['Customer'] = xdf['Customer'].apply(lambda x: str(x))
     xdf.dropna(subset=['Customer Name'], inplace=True)
     agy = xdf.copy()
@@ -187,7 +188,7 @@ for x in xlsx:
     # labeling blank lines to mark one time charges
     agy.loc[(agy['Contract Desc.'].isnull()),
             'Contract Desc.'] = 'One Time Charge'
-
+    
     for key, value in BAgys.items():
         bkey = key + 'B'
         # agy['AgyCode'].loc[agy['Contract Desc.'].str.contains(value)] = bkey

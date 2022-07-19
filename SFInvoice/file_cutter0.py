@@ -8,6 +8,7 @@ from getpass import getuser
 
 # sets root one dir higher for dependent files
 ROOT = str(Path(os.getcwd()).parents[0]) + '\\'
+SD_MAP = ROOT + '\\SFInvoices\\SDMap.xlsx'
 SF_ACCT_INFO = ROOT + '\\extract.csv'
 TODAY_DATESTAMP = str(dt.datetime.now().strftime('%m-%d-%Y'))
 # for windows10 users, getuser returns current user
@@ -125,9 +126,26 @@ def create_acct_code(data: str) -> str:
 
 # TODO -- finish this one? -- prob have a translation file
 # have items that didn't translate as output?
-def material_translate(material: str) -> str:
+def material_translate_create() -> dict:
     # summarizes what it is in less than 3 words
-    pass
+    material_trans_dict = {}
+    sd_map = pd.read_excel(SD_MAP)
+    unmatched = sd_map[sd_map['MaterialTranslate'].isna()].count()['Material']
+    # unmatched entries check
+    print(f'There are {unmatched} entries. Baseline is 36')
+    # so inefficient...
+    (print 'Building material dictionary')
+    for key, value in sd_map.iterrows():
+        material_trans_dict[key] = value
+    return material_trans_dict
+
+def material_trans_df(x, trans=material_trans_dict) -> str:
+    # supplement apply function to translate materials
+    material = x['Material']
+    try:
+        return material_trans_dict.get(material)
+    except:
+        return ''
 
 ''' dependent files '''
 # exported invoice file(s)
@@ -152,6 +170,7 @@ content_version = pd.DataFrame(columns=['Title',
                                         'VersionData',
                                         'PathOnClient',
                                         'FirstPublishLocationId'])
+mat_trans_dict = material_translate_create()
 
 ''' process new files '''
 clear_destination_folder(DESKTOP_PATH)
@@ -177,8 +196,6 @@ for x in xlsx_files:
                       'FI Function Area','Grant','Cost_center','G/L Account'])
     agy = xdf.copy()
 
-
-
     # fill in a date for nonbillable, picks up date from first instance
     # agy.loc[(agy['Invoice Date'].isnull()),
     #        'Invoice Date'] = agy.iloc[0,4]
@@ -187,7 +204,8 @@ for x in xlsx_files:
     # create agycode if state agy number
     agy['AgyCode'] = agy.apply(create_acct_code, axis=1)
     agy.drop(agy[agy['AgyCode'] == 'zzz'].index, inplace=True)
-
+    # translate material
+    agy['MaterialTranslate'] = agy.apply(material_trans_df, axis=1)
 
     # create list of agy/cust codes
     agycodes = agy['AgyCode'].drop_duplicates().tolist()
@@ -209,6 +227,7 @@ for x in xlsx_files:
         # determine total number of invoice dates in agy
         invoice_dates_list = subdf['Invoice Date'].drop_duplicates().tolist()
 
+        #TODO - create material list for acct
         # loop through invoice dates
         # because they didn't include invoice number....?
         for inv in invoice_dates_list:
@@ -229,7 +248,6 @@ for x in xlsx_files:
                         + '. Generated on '\
                         + gendate
                 sales_doc_no = str(int(sales))
-
 
                 # pick first not null customer name
                 # sales_contract_desc = sub2df.iloc[0,1]

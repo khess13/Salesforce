@@ -259,11 +259,12 @@ for x in xlsx:
 
                 filename = tdate + ' - '\
                     + invoiceamt + ' - '\
-                    + str(cont)\
+                    + str(int(cont))\
                     + ' - Shared Services.xlsx'
                 titledate = tdate + ' - '\
                     + invoiceamt + ' - '\
-                    + desc\
+                    + desc + ' - '\
+                    + invoiceno\
                     + ' - Shared Services'
                 printfilename = agycode +\
                     ' Invoice Date ' +\

@@ -29,11 +29,7 @@ EXCEPTION_COUNTY = {'CHESTER': 'CHETCO', 'CHESTERFIELD': 'CHEKCO',
                     'CHEROKEE': 'CHERCO', 'GREENVILLE': 'GREVCO',
                     'GREENWOOD': 'GREWCO', 'CHAS':'CHARCO', 'LEE': 'LEE CO'}
 EXCEPTION_COUNTY_LIST = list(EXCEPTION_COUNTY.keys())
-# TODO - may not need
-COUNTY_EXCEPTION_WORD_LIST = ['POLICE', 'PUBLIC SAFETY','PUBLIC SFTY',
-                              'GOOSE CREEK CC/911','CALHOUN FALLS HIGH',
-                              'GREENWOOD COUNTY SCH.DIST. 50','SCHOOL',
-                              'DISTRICT','SCH DIST']
+
 # re pattern for xxxx co/county
 RE_COUNTY = r'^[A-Z]+\W{1}CO[A-Z]*'
 # keyword in contract description for subset agencies
@@ -127,13 +123,10 @@ def create_acct_code(data: str) -> str:
         # unwanted data
         return 'zzz'
 
-# TODO -- finish these two
+# TODO -- finish this one? -- prob have a translation file
+# have items that didn't translate as output?
 def material_translate(material: str) -> str:
     # summarizes what it is in less than 3 words
-    pass
-
-def create_content_manifest(**args):
-    # generates manifest for SF
     pass
 
 ''' dependent files '''
@@ -258,12 +251,12 @@ for x in xlsx_files:
                 filename = tdate + ' - '\
                     + invoiceamt + ' - '\
                     + desc + ' - '\
-                    + 'Sales Doc # ' + sales_doc_no\
+                    + 'Sales Doc ' + sales_doc_no\
                     + ' - Shared Services.xlsx'
                 titledate = tdate + ' - '\
                     + invoiceamt + ' - '\
                     + desc\
-                    + 'Sales Doc # ' + sales_doc_no\
+                    + 'Sales Doc ' + sales_doc_no\
                     + ' - Shared Services'
                 printfilename = agycode\
                     +' Invoice Date '\

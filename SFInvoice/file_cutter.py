@@ -188,7 +188,7 @@ for x in xlsx:
     # labeling blank lines to mark one time charges
     agy.loc[(agy['Contract Desc.'].isnull()),
             'Contract Desc.'] = 'One Time Charge'
-    
+
     for key, value in BAgys.items():
         bkey = key + 'B'
         # agy['AgyCode'].loc[agy['Contract Desc.'].str.contains(value)] = bkey
@@ -283,6 +283,7 @@ for x in xlsx:
                                                 nextentry,
                                                 ignore_index=True)
 
+                # trim unnecessary columns
                 # export file to excel file and save
                 with pd.ExcelWriter(outputpath + filename) as writer:
                     sub3df.to_excel(writer, index=False)

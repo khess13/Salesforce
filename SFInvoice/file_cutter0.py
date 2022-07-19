@@ -2,7 +2,7 @@ import os
 import re
 import pandas as pd
 import datetime as dt
-import pathlib import Path
+from pathlib import Path
 from shutil import rmtree, copyfile
 from getpass import getuser
 
@@ -27,7 +27,7 @@ UPPER_COUNTY_LIST = [x.upper() for x in PROPER_COUNTY_LIST]
 # exceptions for algo fail
 EXCEPTION_COUNTY = {'CHESTER': 'CHETCO', 'CHESTERFIELD': 'CHEKCO',
                     'CHEROKEE': 'CHERCO', 'GREENVILLE': 'GREVCO',
-                    'GREENWOOD': 'GREWCO'}
+                    'GREENWOOD': 'GREWCO', 'CHAS':'CHARCO', 'LEE': 'LEE CO'}
 EXCEPTION_COUNTY_LIST = list(EXCEPTION_COUNTY.keys())
 # TODO - may not need
 COUNTY_EXCEPTION_WORD_LIST = ['POLICE', 'PUBLIC SAFETY','PUBLIC SFTY',
@@ -35,7 +35,7 @@ COUNTY_EXCEPTION_WORD_LIST = ['POLICE', 'PUBLIC SAFETY','PUBLIC SFTY',
                               'GREENWOOD COUNTY SCH.DIST. 50','SCHOOL',
                               'DISTRICT','SCH DIST']
 # re pattern for xxxx co/county
-RE_COUNTY = re.compile(r'^[A-Z]+\W{1}CO[A-Z]*')
+RE_COUNTY = r'^[A-Z]+\W{1}CO[A-Z]*'
 # keyword in contract description for subset agencies
 B_AGYS = {'E240B': 'EMERGENCY',
           'H630B': 'FIRST STEPS',
@@ -60,7 +60,7 @@ def get_files_from_dir(filepath: str, ext='.XLSX') -> list:
     # gathers files in root directory and returns only xlsx files
     filesindir = os.listdir(filepath)
     # tilda indicates open temp file, excluding these
-    xlsxfiles = [root + f for f in filesindir if ext in f and '~' not in f]
+    xlsxfiles = [ROOT + f for f in filesindir if ext in f and '~' not in f]
     if len(xlsxfiles) == 0:
         print('No files found, try checking the extension.')
         return list()
@@ -79,7 +79,7 @@ def create_acct_code(data: str) -> str:
     customer_number_first_four = customer_number[:4]
     customer_number_len = len(customer_number)
     sceis_agy_code = None
-    first_word = contract_desc[:customer.find(' ')]
+    first_word = contract_desc[:contract_desc.find(' ')]
 
     # make all the acct codes same length
     if customer_number_len == 10:
@@ -105,9 +105,8 @@ def create_acct_code(data: str) -> str:
         # supreme ct
         if customer_number[-2:] == '16':
             return customer_number
-        else:
-            # city of columbia
-            return '2160000'
+        # city of columbia
+        return '2160000'
 
     # other numerical accounts
     if contract_desc in ['RIVERBANKS ZOO',
@@ -117,21 +116,23 @@ def create_acct_code(data: str) -> str:
                         'SC BAR ASSOCIATION - NON-BILLABLE']:
         return customer_number
 
-    # counties -- TODO this new logic should work
-    if re.search(RE_COUNTY,contract_desc):
-        if first_word in COUNTY_EXCEPTION_WORD_LIST:
-            return EXCEPTION_COUNTY.get(first_word)
-        else:
-            return firstword[:4]+'CO'
+    # counties
+    if first_word in UPPER_COUNTY_LIST:
+        #to filter out county school districts
+        if re.search(RE_COUNTY, contract_desc):
+            if first_word in EXCEPTION_COUNTY_LIST:
+                return EXCEPTION_COUNTY.get(first_word)
+            return first_word[:4]+'CO'
     else:
         # unwanted data
         return 'zzz'
 
+# TODO -- finish these two
 def material_translate(material: str) -> str:
     # summarizes what it is in less than 3 words
     pass
 
-def create_content_manifest(**args) -> file:
+def create_content_manifest(**args):
     # generates manifest for SF
     pass
 
@@ -148,7 +149,7 @@ except FileNotFoundError:
 ''' prepare aux data and outputs '''
 # build dictionary because i don't know how to do this right
 acctid_dict = {}
-for index, row in accountids.iterrows():
+for index, row in sf_acct_ids.iterrows():
     acctid_dict[row['SCEIS_CODE__C']] = row['ID']
 # to convert float into currency string
 float_format = "${:,.2f}".format
@@ -166,24 +167,39 @@ print('Gathering S&D outputs to parse.')
 
 for x in xlsx_files:
     xdf = pd.read_excel(x)
+    # get invoice date for file to fill in for nonbillable
+    invoice_date_file = xdf.iloc[0,4]
     ''' data wrangling '''
     # convert customer number to str
     xdf['Customer'] = xdf['Customer'].apply(lambda x: str(x))
-    xdf.dropna(subset=['Customer Name'], inplace=True)
+    # xdf.dropna(subset=['Document Desc.'], inplace=True)
+    # labeling OTCs
+    xdf.loc[(xdf['Document Desc.'].isnull()),
+            'Document Desc.'] = 'One Time Charge'
+    # because there are / in this field
+    xdf['Document Desc.'] = xdf['Document Desc.']\
+                                .apply(lambda x: x.replace('/','-'))
+    # remove unnecessary columns
+    xdf.drop(columns=['Exception','Plant','Commitment Item','Fund',
+                      'FI Function Area','Grant','Cost_center','G/L Account'])
     agy = xdf.copy()
 
+
+
+    # fill in a date for nonbillable, picks up date from first instance
+    # agy.loc[(agy['Invoice Date'].isnull()),
+    #        'Invoice Date'] = agy.iloc[0,4]
+    agy.loc[(agy['Invoice Date'].isnull()),
+                 'Invoice Date'] = invoice_date_file
     # create agycode if state agy number
-    agy['AgyCode'] = agy.apply(create_AgyCode, axis=1)
+    agy['AgyCode'] = agy.apply(create_acct_code, axis=1)
     agy.drop(agy[agy['AgyCode'] == 'zzz'].index, inplace=True)
-    # labeling OTCs
-    agy.loc[(agy['Document Desc.'].isnull()),
-            'Document Desc..'] = 'One Time Charge'
 
 
     # create list of agy/cust codes
     agycodes = agy['AgyCode'].drop_duplicates().tolist()
 
-    for key, value in BAgys.items():
+    for key, value in B_AGYS.items():
         # mark B agencies
         agy['AgyCode'].loc[agy['Document Desc.'].str.contains(value)] = key
         # to prevent sending empty dataframes for B agencies
@@ -199,3 +215,85 @@ for x in xlsx_files:
                                                           .tolist()
         # determine total number of invoice dates in agy
         invoice_dates_list = subdf['Invoice Date'].drop_duplicates().tolist()
+
+        # loop through invoice dates
+        # because they didn't include invoice number....?
+        for inv in invoice_dates_list:
+            sub2df = subdf[subdf['Invoice Date'] == inv].copy()
+            if sub2df.empty:
+                continue
+
+            for sales in sales_document_no_list:
+                sub3df = sub2df[sub2df['Sales Document #'] == sales].copy()
+                if sub3df.empty:
+                    continue
+                # file variables
+                agycode = agyc
+                pdate = inv.strftime('%m-%d-%Y')
+                gendate = TODAY_DATESTAMP
+                desc = 'S&D billing for services on '\
+                        + pdate\
+                        + '. Generated on '\
+                        + gendate
+                sales_doc_no = str(int(sales))
+
+
+                # pick first not null customer name
+                # sales_contract_desc = sub2df.iloc[0,1]
+                sales_contract_desc_list = sub3df['Document Desc.']\
+                                                    .drop_duplicates()\
+                                                    .tolist()
+
+                if sub3df.iloc[0,3] == 'One Time Charge':
+                    desc = sales_contract_desc_list[1]
+                else:
+                    desc = sales_contract_desc_list[0]
+
+                # file identifiers
+                invoiceamt = float_format(round(sub3df['Net Value'].sum(), 2))
+                tdate = '20'+pdate[-2:]\
+                        + '-' + pdate[:2]\
+                        + '-' + pdate[3:5]
+
+                filename = tdate + ' - '\
+                    + invoiceamt + ' - '\
+                    + desc + ' - '\
+                    + 'Sales Doc # ' + sales_doc_no\
+                    + ' - Shared Services.xlsx'
+                titledate = tdate + ' - '\
+                    + invoiceamt + ' - '\
+                    + desc\
+                    + 'Sales Doc # ' + sales_doc_no\
+                    + ' - Shared Services'
+                printfilename = agycode\
+                    +' Invoice Date '\
+                    + pdate + ' '\
+                    + desc
+
+                # gets Salesforce ID for account
+                idofaccount = acctid_dict[agycode]
+                # generating ContentVersion manifest
+                nextentry = pd.Series([titledate,
+                                       desc,
+                                       DESKTOP_PATH + filename,
+                                       DESKTOP_PATH + filename,
+                                       idofaccount],
+                                       index=content_version.columns)
+                content_version = content_version.append(
+                                                nextentry,
+                                                ignore_index=True)
+
+                # export file to excel file and save
+                with pd.ExcelWriter(DESKTOP_PATH + filename) as writer:
+                    sub3df.to_excel(writer, index=False)
+                print('Creating ' + filename)
+
+print('Creating manifest for ContentVersion')
+content_version.to_csv(DESKTOP_PATH
+                      + 'ContentVersion Generated On '
+                      + TODAY_DATESTAMP
+                      + '.csv', index=False)
+
+copy_file_map(ROOT+'\\pdfimportmap.sdl', DESKTOP_PATH+'\\pdfimportmap.sdl')
+
+print('Operation Complete!')

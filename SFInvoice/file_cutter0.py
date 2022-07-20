@@ -44,6 +44,7 @@ EXCEPTION_COUNTY = {'CHESTER': 'CHETCO', 'CHESTERFIELD': 'CHEKCO',
                     'CHEROKEE': 'CHERCO', 'GREENVILLE': 'GREVCO',
                     'GREENWOOD': 'GREWCO', 'CHAS':'CHARCO', 'LEE': 'LEE CO'}
 EXCEPTION_COUNTY_LIST = list(EXCEPTION_COUNTY.keys())
+REMOVE_SCHOOL = ['SCHOOL','DISTRICT','SCH DIST']
 
 # re pattern for xxxx co/county
 RE_COUNTY = r'^[A-Z]+\W{1}CO[A-Z]*'
@@ -133,6 +134,8 @@ def create_acct_code(data: str) -> str:
         if re.search(RE_COUNTY, contract_desc):
             if first_word in EXCEPTION_COUNTY_LIST:
                 return EXCEPTION_COUNTY.get(first_word)
+            elif contract_desc in REMOVE_SCHOOL:
+                return 'zzz'
             return first_word[:4]+'CO'
     else:
         # unwanted data
@@ -202,8 +205,9 @@ for x in xlsx_files:
     xdf['Document Desc.'] = xdf['Document Desc.']\
                                 .apply(lambda x: x.replace('/','-'))
     # remove unnecessary columns
-    xdf.drop(columns=['Exception','Plant','Commitment Item','Fund',
-                      'FI Function Area','Grant','Cost_center','G/L Account'])
+    xdf.drop(['Exception','Plant','Commitment Item','Fund',
+              'FI Function Area','Grant','Cost_center','G/L Account'],
+              axis=1, inplace=True)
     agy = xdf.copy()
 
     # fill in a date for nonbillable, picks up date from first instance
@@ -310,6 +314,9 @@ for x in xlsx_files:
                                                 nextentry,
                                                 ignore_index=True)
 
+                # drop identifier columns
+                sub3df.drop(['AgyCode','MaterialTranslate'], axis=1,
+                             inplace=True)
                 # export file to excel file and save
                 with pd.ExcelWriter(DESKTOP_PATH + filename) as writer:
                     sub3df.to_excel(writer, index=False)

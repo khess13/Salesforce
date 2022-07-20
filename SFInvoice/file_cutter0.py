@@ -1,5 +1,6 @@
 import os
 import re
+import numpy as np
 import pandas as pd
 import datetime as dt
 from pathlib import Path
@@ -8,8 +9,21 @@ from getpass import getuser
 
 # sets root one dir higher for dependent files
 ROOT = str(Path(os.getcwd()).parents[0]) + '\\'
-SD_MAP = ROOT + '\\SFInvoices\\SDMap.xlsx'
+# dependencies
+SD_MAP = ROOT + '\\SFInvoice\\SDMap.xlsx'
 SF_ACCT_INFO = ROOT + '\\extract.csv'
+# dep check
+try:
+    sd_map_df = pd.read_excel(SD_MAP)
+# TODO - throws silence error
+except FileNotFoundError:
+    print('SD_Map.xlsx is missing')
+try:
+    sf_acct_ids = pd.read_csv(SF_ACCT_INFO)
+except FileNotFoundError:
+    print('extract.csv is missing from parent directory')
+
+
 TODAY_DATESTAMP = str(dt.datetime.now().strftime('%m-%d-%Y'))
 # for windows10 users, getuser returns current user
 DESKTOP_PATH = 'C:\\Users\\'+getuser()+'\\Desktop\\FileDrop\\'
@@ -126,36 +140,31 @@ def create_acct_code(data: str) -> str:
 
 # TODO -- finish this one? -- prob have a translation file
 # have items that didn't translate as output?
-def material_translate_create() -> dict:
+def material_translate_create(sd=sd_map_df) -> dict:
     # summarizes what it is in less than 3 words
     material_trans_dict = {}
-    sd_map = pd.read_excel(SD_MAP)
-    unmatched = sd_map[sd_map['MaterialTranslate'].isna()].count()['Material']
+    unmatched = sd[sd['MaterialTranslate'].isna()].count()['Material']
     # unmatched entries check
     print(f'There are {unmatched} entries. Baseline is 36')
+    #clear nans
+    sd_map_df.dropna(subset=['MaterialTranslate'], inplace=True)
     # so inefficient...
-    (print 'Building material dictionary')
-    for key, value in sd_map.iterrows():
-        material_trans_dict[key] = value
+    print('Building material dictionary')
+    for index, row in sd_map_df.iterrows():
+        material_trans_dict[row['Material']] = row['MaterialTranslate']
     return material_trans_dict
 
-def material_trans_df(x, trans=material_trans_dict) -> str:
+def material_trans_df(x) -> str:
     # supplement apply function to translate materials
-    material = x['Material']
+    material = x['Material Desc.']
     try:
-        return material_trans_dict.get(material)
+        return mat_trans_dict.get(material)
     except:
         return ''
 
 ''' dependent files '''
 # exported invoice file(s)
 xlsx_files = get_files_from_dir(ROOT)
-# SF account IDs
-try:
-    sf_acct_ids = pd.read_csv(SF_ACCT_INFO)
-except FileNotFoundError:
-    print('extract.csv is missing from parent directory')
-
 
 ''' prepare aux data and outputs '''
 # build dictionary because i don't know how to do this right
@@ -177,6 +186,7 @@ clear_destination_folder(DESKTOP_PATH)
 
 print('Gathering S&D outputs to parse.')
 
+agy_results_dict = {}
 for x in xlsx_files:
     xdf = pd.read_excel(x)
     # get invoice date for file to fill in for nonbillable
@@ -206,7 +216,6 @@ for x in xlsx_files:
     agy.drop(agy[agy['AgyCode'] == 'zzz'].index, inplace=True)
     # translate material
     agy['MaterialTranslate'] = agy.apply(material_trans_df, axis=1)
-
     # create list of agy/cust codes
     agycodes = agy['AgyCode'].drop_duplicates().tolist()
 
@@ -227,7 +236,14 @@ for x in xlsx_files:
         # determine total number of invoice dates in agy
         invoice_dates_list = subdf['Invoice Date'].drop_duplicates().tolist()
 
-        #TODO - create material list for acct
+        # make shared services list/dict
+        print(subdf[['Material Desc.','MaterialTranslate']])
+        serv_list = subdf['MaterialTranslate'].tolist()
+        # TODO to remove None values
+        serv_list2 = [x for x in serv_list if not None]
+        serv_string = '\n'.join(serv_list2)
+        agy_results_dict[agyc] = serv_string
+
         # loop through invoice dates
         # because they didn't include invoice number....?
         for inv in invoice_dates_list:
@@ -305,6 +321,23 @@ content_version.to_csv(DESKTOP_PATH
                       + TODAY_DATESTAMP
                       + '.csv', index=False)
 
+print('Creating shared services list')
+shared_services_df = pd.DataFrame.from_dict(agy_results_dict, orient='index',
+                                            columns=['Service'])
+shared_services_df.reset_index(level=0, inplace=True)
+#add agycode column
+shared_services_df.columns = ['AgyCode','Service']
+shared_services_df.replace('', np.nan, inplace=True)
+shared_services_df.dropna(subset=['Service'], inplace=True)
+#add Salesforce IDs
+for agy, sfid in SF_ACCT_INFO.items():
+    shared_services_df.loc[shared_services_df['AgyCode'] == agy,\
+                                        'SalesforceAcctID'] = sfid
+shared_services_df.to_csv(DESKTOP_PATH+'exportSharedServices.csv', index=False)
+
 copy_file_map(ROOT+'\\pdfimportmap.sdl', DESKTOP_PATH+'\\pdfimportmap.sdl')
+copy_file_map(ROOT+'DTO Services\\dtoservices.sdl',\
+              DESKTOP_PATH+'\\dtoservices.sdl')
+
 
 print('Operation Complete!')

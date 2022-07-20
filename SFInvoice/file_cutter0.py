@@ -237,11 +237,11 @@ for x in xlsx_files:
         invoice_dates_list = subdf['Invoice Date'].drop_duplicates().tolist()
 
         # make shared services list/dict
-        print(subdf[['Material Desc.','MaterialTranslate']])
-        serv_list = subdf['MaterialTranslate'].tolist()
-        # TODO to remove None values
-        serv_list2 = [x for x in serv_list if not None]
-        serv_string = '\n'.join(serv_list2)
+        # subset frame to remove null/none values; then designate col tolist()
+        serv_list = subdf[subdf['MaterialTranslate'].notnull()]\
+                               ['MaterialTranslate'].drop_duplicates().tolist()
+        # added sorted() to make a-z
+        serv_string = '\n'.join(sorted(serv_list))
         agy_results_dict[agyc] = serv_string
 
         # loop through invoice dates
@@ -330,7 +330,7 @@ shared_services_df.columns = ['AgyCode','Service']
 shared_services_df.replace('', np.nan, inplace=True)
 shared_services_df.dropna(subset=['Service'], inplace=True)
 #add Salesforce IDs
-for agy, sfid in SF_ACCT_INFO.items():
+for agy, sfid in acctid_dict.items():
     shared_services_df.loc[shared_services_df['AgyCode'] == agy,\
                                         'SalesforceAcctID'] = sfid
 shared_services_df.to_csv(DESKTOP_PATH+'exportSharedServices.csv', index=False)

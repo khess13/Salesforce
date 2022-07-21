@@ -42,7 +42,7 @@ def get_files_from_dir(filepath, ext=['.XLSX', '.pdf', 'extract.csv']):
 
 good2go = get_files_from_dir(root)
 if good2go is True:
-    import file_cutterv2
+    import file_cutter0
     import pdf_cutter
     print('So fresh and clean!')
 else:

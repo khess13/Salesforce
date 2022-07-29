@@ -119,7 +119,9 @@ def create_acct_code(data: str) -> str:
             return customer_number
         # city of columbia
         return '2160000'
-
+    #because gov school is being charged to 2 diff acct numbers
+    if customer_number == '4003840':
+        return 'H650'
     # other numerical accounts
     if contract_desc in ['RIVERBANKS ZOO',
                         'SC INTERACTIVE',

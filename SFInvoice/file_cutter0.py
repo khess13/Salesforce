@@ -278,9 +278,9 @@ for x in xlsx_files:
                                                     .tolist()
 
                 if sub3df.iloc[0,3] == 'One Time Charge':
-                    desc = sales_contract_desc_list[1]
+                    customername = sales_contract_desc_list[1]
                 else:
-                    desc = sales_contract_desc_list[0]
+                    customername = sales_contract_desc_list[0]
 
                 # file identifiers
                 invoiceamt = float_format(round(sub3df['Net Value'].sum(), 2))
@@ -290,18 +290,18 @@ for x in xlsx_files:
 
                 filename = tdate + ' - '\
                     + invoiceamt + ' - '\
-                    + desc\
+                    + customername\
                     + ' - Sales Doc ' + sales_doc_no\
                     + ' - Shared Services.xlsx'
                 titledate = tdate + ' - '\
                     + invoiceamt + ' - '\
-                    + desc\
+                    + customername\
                     + ' - Sales Doc ' + sales_doc_no\
                     + ' - Shared Services'
                 printfilename = agycode\
                     +' Invoice Date '\
                     + pdate + ' '\
-                    + desc
+                    + customername
 
                 # gets Salesforce ID for account
                 idofaccount = acctid_dict[agycode]

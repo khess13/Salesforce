@@ -1,0 +1,21 @@
+public class ContractNotes {
+    private static String statusType = 'Information';
+    private static Contract_Notes__c contractNotes;
+
+    public ContractNotes() {
+        //queries data via constructor
+        contractNotes = [
+            SELECT Account__r.Name, Name, Note_Text__c, Status__c, Date__c
+            FROM Contract_Notes__c
+            WHERE Status__c = :statusType
+            ORDER BY Date__c desc, Account__r.Name desc
+        ];
+    }
+
+    //external variable for vf page
+    public Contract_Notes__c records {
+        get{return contractNotes;}
+        set;
+    }
+
+}

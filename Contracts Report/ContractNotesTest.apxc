@@ -1,0 +1,25 @@
+@isTest
+public class ContractNotesTest {
+
+    @testSetup static void createTestData(){
+        //setup test account
+        Account testAccount = new Account(Name='test acct');
+        insert testAccount;
+        //insert 3 records
+    	Contract_Notes__c testNote = new Contract_Notes__c(Account__c = testAccount.id, Name='test1', Status__c='Information', Note_Text__c='test1', Date__c = Date.newInstance(2020,12,31));
+        Contract_Notes__c testNote2 = new Contract_Notes__c(Account__c = testAccount.id, Name='test2', Status__c='Archive', Note_Text__c='test2', Date__c = Date.newInstance(2022, 08, 16));
+        Contract_Notes__c testNote3 = new Contract_Notes__c(Account__c = testAccount.id, Name='test2', Status__c='Issue', Note_Text__c='test3', Date__c = Date.newInstance(2021, 03, 15));
+        insert testNote;
+        insert testNote2;
+        insert testNote3;
+    }
+
+
+    @isTest static void ContractNotesControllerTest () {
+     	//instantiate  controller
+    	ContractNotes testcontract = new ContractNotes();
+        //reading system, not test data
+        //test that query returns something
+        System.assertNotEquals(null, testcontract.records);
+    }
+}

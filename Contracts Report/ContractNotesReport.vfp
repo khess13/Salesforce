@@ -1,0 +1,16 @@
+<!-- Contract Note Report, displays items with status == Information -->
+<apex:page controller="ContractNotes"
+           renderAs="pdf">
+    <apex:pageBlock title="Contract Notes" id="contract_notes">
+        <apex:outputText value="{0,date,MM/dd/yy}">
+            <apex:param value="{!TODAY()}" />
+        	</apex:outputText>
+        <apex:pageBlockTable value="{! records}" var="r" width="100%" border="0.5px" cellpadding="8px">
+            <apex:column value="{! r.Date__c}" />
+            <apex:column value="{! r.Account__r.Name}" />
+            <apex:column value="{! r.Status__c }" />
+            <apex:column value="{! r.Name }" headerValue="Note" />
+            <apex:column value="{! r.Note_Text__c}" />
+        </apex:pageBlockTable>
+    </apex:pageBlock>
+</apex:page>

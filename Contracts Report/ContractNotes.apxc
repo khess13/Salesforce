@@ -1,6 +1,6 @@
 public class ContractNotes {
     private static String statusType = 'Information';
-    private static Contract_Notes__c contractNotes;
+    private static List<Contract_Notes__c> contractNotes;
 
     public ContractNotes() {
         //queries data via constructor
@@ -13,7 +13,7 @@ public class ContractNotes {
     }
 
     //external variable for vf page
-    public Contract_Notes__c records {
+    public List<Contract_Notes__c> records {
         get{return contractNotes;}
         set;
     }

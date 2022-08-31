@@ -293,11 +293,7 @@ for x in xlsx_files:
                     + customername\
                     + ' - Sales Doc ' + sales_doc_no\
                     + ' - Shared Services.xlsx'
-                titledate = tdate + ' - '\
-                    + invoiceamt + ' - '\
-                    + customername\
-                    + ' - Sales Doc ' + sales_doc_no\
-                    + ' - Shared Services'
+                titledate = filename[:-5]
                 printfilename = agycode\
                     +' Invoice Date '\
                     + pdate + ' '\

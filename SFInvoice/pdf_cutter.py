@@ -143,10 +143,11 @@ for p in pdf_location:
                           desc,
                           outputpath + filename,
                           outputpath + filename,
-                          idofaccount],
-                          index=contentVersion.columns)
-    contentVersion = contentVersion.append(nextentry, ignore_index=True)
+                          idofaccount])
 
+    content_version = pd.concat([nextentry],
+                                ignore_index=True,
+                                axis=1)
     print('Logging '
           + printfilename + ' '
           + invoiceno + ' - doc id - '

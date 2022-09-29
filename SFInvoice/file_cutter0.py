@@ -232,6 +232,7 @@ for x in xlsx_files:
         if not agy[agy['AgyCode'] == key].empty:
             agycodes.append(key)
 
+    loop_count = 0
     # loop through agycodes
     for agyc in agycodes:
         # create subset of original data
@@ -304,16 +305,15 @@ for x in xlsx_files:
 
                 # gets Salesforce ID for account
                 idofaccount = acctid_dict[agycode]
-            
+
                 # generating ContentVersion manifest
-                nextentry = pd.Series([titledate,
-                                       desc,
-                                       DESKTOP_PATH + filename,
-                                       DESKTOP_PATH + filename,
-                                       idofaccount])
-                content_version = pd.concat([nextentry],
-                                            ignore_index=True,
-                                            axis=1)
+                content_version.loc[loop_count] = [titledate,
+                                                desc,
+                                                DESKTOP_PATH + filename,
+                                                DESKTOP_PATH + filename,
+                                                idofaccount]
+                loop_count +=1
+
                 # drop identifier columns
                 sub3df.drop(['AgyCode','MaterialTranslate'], axis=1,
                              inplace=True)

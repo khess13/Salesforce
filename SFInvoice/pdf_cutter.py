@@ -94,6 +94,8 @@ print('Gathering pdfs to parse.')
 # get files to process
 # Updated function to resuse without appending root
 pdf_location = get_files_from_dir(outputpath, switch='other')
+
+loop_count = 0
 for p in pdf_location:
     # TODO -- cut the pdfs by page somehow?
     # read pdf and put in dataframe
@@ -139,15 +141,13 @@ for p in pdf_location:
     idofaccount = acctid_dict[agycode]
 
     # generating ContentVersion manifest
-    nextentry = pd.Series([titledate,
-                          desc,
-                          outputpath + filename,
-                          outputpath + filename,
-                          idofaccount])
+    contentVersion.loc[loop_count] = [titledate,
+                                      desc,
+                                      outputpath + filename,
+                                      outputpath + filename,
+                                      idofaccount]
+    loop_count +=1
 
-    content_version = pd.concat([nextentry],
-                                ignore_index=True,
-                                axis=1)
     print('Logging '
           + printfilename + ' '
           + invoiceno + ' - doc id - '

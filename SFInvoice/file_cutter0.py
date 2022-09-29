@@ -252,6 +252,9 @@ for x in xlsx_files:
 
         # loop through invoice dates
         # because they didn't include invoice number....?
+        # TODO - get this to show an error for no invoice no
+        if type(invoice_dates_list) == float:
+            print('No Invoice Date')
         for inv in invoice_dates_list:
             sub2df = subdf[subdf['Invoice Date'] == inv].copy()
             if sub2df.empty:
@@ -301,17 +304,16 @@ for x in xlsx_files:
 
                 # gets Salesforce ID for account
                 idofaccount = acctid_dict[agycode]
+            
                 # generating ContentVersion manifest
                 nextentry = pd.Series([titledate,
                                        desc,
                                        DESKTOP_PATH + filename,
                                        DESKTOP_PATH + filename,
-                                       idofaccount],
-                                       index=content_version.columns)
-                content_version = content_version.append(
-                                                nextentry,
-                                                ignore_index=True)
-
+                                       idofaccount])
+                content_version = pd.concat([nextentry],
+                                            ignore_index=True,
+                                            axis=1)
                 # drop identifier columns
                 sub3df.drop(['AgyCode','MaterialTranslate'], axis=1,
                              inplace=True)

@@ -25,8 +25,8 @@ account
 - Navigate to directory where script is located
 - type 'python file_cutterv2.py' to execute script
 # DELETING
--Export ContentDocument and grab IDs of documents to delete
--Send IDs as Delete
+- Export ContentDocument and grab IDs of documents to delete
+- Send IDs as Delete
 
 ## pdf_cutter
 # CONSIDERATIONS
@@ -54,5 +54,5 @@ account
 - Navigate to directory where script is located
 - type 'python file_cutter.py' to execute script
 # DELETING
--Export ContentDocument and grab IDs of documents to delete
--Send IDs as Delete
+- Export ContentDocument and grab IDs of documents to delete
+- Send IDs as Delete

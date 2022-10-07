@@ -20,6 +20,8 @@ except FileNotFoundError:
     print('SD_Map.xlsx is missing')
 try:
     sf_acct_ids = pd.read_csv(SF_ACCT_INFO)
+    # because NA values
+    sf_acct_ids.dropna(subset=['SCEIS_CODE__C'], inplace=True)
 except FileNotFoundError:
     print('extract.csv is missing from parent directory')
 
@@ -327,6 +329,11 @@ content_version.to_csv(DESKTOP_PATH
                       + 'ContentVersion Generated On '
                       + TODAY_DATESTAMP
                       + '.csv', index=False)
+
+# adding null values for accounts w/o billing
+for agy in acctid_dict.keys():
+    if agy not in agy_results_dict.keys():
+        agy_results_dict[agy] = ' '
 
 print('Creating shared services list')
 shared_services_df = pd.DataFrame.from_dict(agy_results_dict, orient='index',

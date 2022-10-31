@@ -43,19 +43,64 @@ def create_AgyCode(data) -> str:
     customer = data['Customer Name']
     # custno = '000' + data['Customer']
     custno = data['Customer']
+    first_four_custno = custno[:4]
+    last_four_custno = custno[:]
     firstwordpos = customer.find(' ')
     firstword = customer[:firstwordpos]
     x = None
     sc = None
 
     # because BOFI is acct names are the same and different
-    if custno[:4] == 'R230':
+    if first_four_custno == 'R230':
         # Consumer Finance Division
         if customer == 'STATE BOARD OF FINANCIAL INSTITUTIO':
             return 'R230B'
         else:
             # Bank Examining Division
             return 'R230'
+    # division of admin
+    elif first_four_custno == 'D500':
+        # Division of Facilities Mgmt & Prop Srv
+        if last_four_custno in ['0009',
+                                '0012',
+                                '0039']:
+            return 'D500FMPS'
+        # Program Mgmt Office
+        if last_four_custno in ['0017']:
+            return 'D500PMO'
+        # Division of State Agy Support Srvs
+        # State Fleet & Surplus Prop
+        if last_four_custno in ['0013',
+                                '0012']:
+            return 'D500SASS'
+        # Division of State HR
+        # TODO -- might be wrong?
+        if last_four_custno in ['0008']:
+            return 'D500DSHR'
+        # Exec Budget Office
+        if last_four_custno in ['0007']:
+            return 'D500EBO'
+        # Govt Affairs and Economic Opportunity
+        if last_four_custno in ['0035',
+                                '0036']:
+            return 'D500GAEO'
+        # Office of Exec Policy & Programs
+        if last_four_custno in ['0025',
+                                '0033',
+                                '0034']:
+            return 'D500OEPP'
+        # SC Enterprise Info System
+        if last_four_custno in ['0014']:
+            return 'D500SCEIS'
+        # Office of Technology and Info Srvs
+        if last_four_custno in ['0017']:
+            return 'D500OTIS'
+        # Office of Administrative Services
+        if last_four_custno in ['0003']:
+            return 'D500OAS'
+        # Division of Info Sec?
+        # Enterprise Privacy?
+
     # checks first letter is alpha
     # returns SCEIS code
     elif custno[:1].isalpha():

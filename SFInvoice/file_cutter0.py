@@ -91,6 +91,7 @@ def create_acct_code(data: str) -> str:
     contract_desc = data['Document Desc.']
     customer_number = data['Customer']
     customer_number_first_four = customer_number[:4]
+    customer_number_last_four = customer_number[-4:]
     customer_number_len = len(customer_number)
     sceis_agy_code = None
     first_word = contract_desc[:contract_desc.find(' ')]
@@ -109,6 +110,49 @@ def create_acct_code(data: str) -> str:
         else:
             # bank examining division
             return 'R230'
+
+    # divisions of Admin
+    if customer_number_first_four == 'D500':
+        # Division of Facilities Mgmt & Prop Srv
+        if customer_number_last_four in ['0009',
+                                         '0012',
+                                         '0039']:
+            return 'D500FMPS'
+        # Program Mgmt Office
+        if customer_number_last_four in ['0017']:
+            return 'D500PMO'
+        # Division of State Agy Support Srvs
+        # State Fleet & Surplus Prop
+        if customer_number_last_four in ['0013',
+                                         '0012']:
+            return 'D500SASS'
+        # Division of State HR
+        # TODO -- might be wrong?
+        if customer_number_last_four in ['0008']:
+            return 'D500DSHR'
+        # Exec Budget Office
+        if customer_number_last_four in ['0007']:
+            return 'D500EBO'
+        # Govt Affairs and Economic Opportunity
+        if customer_number_last_four in ['0035',
+                                         '0036']:
+            return 'D500GAEO'
+        # Office of Exec Policy & Programs
+        if customer_number_last_four in ['0025',
+                                         '0033',
+                                         '0034']:
+            return 'D500OEPP'
+        # SC Enterprise Info System
+        if customer_number_last_four in ['0014']:
+            return 'D500SCEIS'
+        # Office of Technology and Info Srvs
+        if customer_number_last_four in ['0017']:
+            return 'D500OTIS'
+        # Office of Administrative Services
+        if customer_number_last_four in ['0003']:
+            return 'D500OAS'
+        # Division of Info Sec?
+        # Enterprise Privacy?
 
     # return A000 pattern if first value is alpha
     if customer_number[:1].isalpha():

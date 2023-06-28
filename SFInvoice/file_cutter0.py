@@ -28,7 +28,8 @@ except FileNotFoundError:
 
 TODAY_DATESTAMP = str(dt.datetime.now().strftime('%m-%d-%Y'))
 # for windows10 users, getuser returns current user
-DESKTOP_PATH = 'C:\\Users\\'+getuser()+'\\Desktop\\FileDrop\\'
+# 2023-06-28 because they pushed desktop to onedrive
+DESKTOP_PATH = 'C:\\Users\\'+getuser()+'\\FileDrop\\'
 
 # global data sets
 PROPER_COUNTY_LIST = ['Abbeville', 'Aiken', 'Allendale', 'Anderson', 'Bamberg',

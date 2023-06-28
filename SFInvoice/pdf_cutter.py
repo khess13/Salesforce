@@ -62,7 +62,8 @@ datestamp = str(dt.datetime.now().strftime('%m-%d-%Y'))
 # see file_cutterv2 for comments
 # pdfdrop = root + '\\PDFdrop\\'
 currID = getpass.getuser()
-outputpath = 'C:\\Users\\'+currID+'\\Desktop\\PDFDrop\\'
+# because they pushed desktop to onedrive, removed from desktop
+outputpath = 'C:\\Users\\'+currID+'\\PDFDrop\\'
 clear_destination_folder(outputpath)
 
 # set up format of manifest for ContentVersion

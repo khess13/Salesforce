@@ -69,7 +69,7 @@ class FileService:
         # SF map for dataloader - pdfimportmap.sdl
         files_from_data = self.get_files_from_dir()
         files_labeled_from_data = {}
-        if len(files_from_data) == 11:
+        if len(files_from_data) == 12:
             for file in files_from_data:
                 if self.__file_date_checker(file) is False:
                     raise Exception(f'{file} is stale')
@@ -95,6 +95,8 @@ class FileService:
                     files_labeled_from_data['contractSDL'] = file
                 elif 'pdfimportmap.sdl' == file:
                     files_labeled_from_data['pdfimportSDL'] = file
+                elif 'dtoservices.sdl' == file:
+                    files_labeled_from_data['dtoSDL'] = file
         else:
             raise ValueError(
                 f'Check Data folder. Count is {str(len(files_from_data))}')
@@ -106,9 +108,9 @@ class FileService:
             # skip checking these files
             return True
         elif 'extract' in sus_file or 'SDMap' in sus_file:
-            no_of_days = arrow.now().shift(days=-200) #s/b 90
+            no_of_days = arrow.now().shift(days=-90) #s/b 90
         else:
-            no_of_days = arrow.now().shift(days=-90) #s/b 7
+            no_of_days = arrow.now().shift(days=-7) #s/b 7
         if arrow.get(os.stat(sus_file).st_mtime) > no_of_days:
             return True
         return False

@@ -42,7 +42,7 @@ class FileService:
             os.mkdir(self.destination_dir)
         except Exception:
             os.mkdir(self.destination_dir)
-
+    
     def copy_file(self, file_name) -> None:
         """Copy files from data folder to destination"""
         shutil.copyfile(self.data_directory + file_name, 
@@ -58,7 +58,7 @@ class FileService:
         """Are all files accounted for and returns file location"""
         # SFexport - contract.csv
         # SFexport - extract.csv
-        # BOexport - S&D Salesforce - DTO Services.xlsx -- removing?
+        # BOexport - S&D Salesforce - DTO Services.xlsx <-- removing?
         # BOexport - headcount.xlsx --- run at different time, rm?
         # BOexport - S&D Salesforce - Scheduled.pdf
         # BOexport - SDMap.xlsx
@@ -67,6 +67,7 @@ class FileService:
         # SF map for dataloader - hc.sdl
         # SF map for dataloader - contract_services.sdl
         # SF map for dataloader - pdfimportmap.sdl
+        # SF map for dataloader - dtoservices.sdl
         files_from_data = self.get_files_from_dir()
         files_labeled_from_data = {}
         if len(files_from_data) == 12:
@@ -79,7 +80,8 @@ class FileService:
                     files_labeled_from_data['ECCInv'] = file
                 elif 'Headcount' in file:
                     files_labeled_from_data['HR'] = file
-                elif 'contract' in file:
+                # be careful of other files with similiar names
+                elif 'contract.csv' in file:
                     files_labeled_from_data['Contracts'] = file
                 elif 'Scheduled' in file:
                     files_labeled_from_data['BOInv'] = file
@@ -87,6 +89,7 @@ class FileService:
                     files_labeled_from_data['SDMap'] = file
                 elif 'AgencyServices' in file:
                     files_labeled_from_data['AgencyServices'] = file
+                '''
                 elif 'agencyservices.sdl' == file:
                     files_labeled_from_data['agyservSDL'] = file
                 elif 'hc.sdl' == file:
@@ -97,6 +100,7 @@ class FileService:
                     files_labeled_from_data['pdfimportSDL'] = file
                 elif 'dtoservices.sdl' == file:
                     files_labeled_from_data['dtoSDL'] = file
+                '''
         else:
             raise ValueError(
                 f'Check Data folder. Count is {str(len(files_from_data))}')
@@ -108,9 +112,9 @@ class FileService:
             # skip checking these files
             return True
         elif 'extract' in sus_file or 'SDMap' in sus_file:
-            no_of_days = arrow.now().shift(days=-90) #s/b 90
+            no_of_days = arrow.now().shift(days=-200) #s/b 90
         else:
-            no_of_days = arrow.now().shift(days=-7) #s/b 7
+            no_of_days = arrow.now().shift(days=-90) #s/b 7
         if arrow.get(os.stat(sus_file).st_mtime) > no_of_days:
             return True
         return False

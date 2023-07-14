@@ -12,6 +12,8 @@ SFInvoice/__pycache__/
 Headcount/
 DTO Services/
 Meetings/
+Services/
+Data/
 
 *.xls
 *.xlsx

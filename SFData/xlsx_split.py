@@ -4,9 +4,9 @@ Creates ContentVersion for SF Dataloader
 """
 import os
 import re
-import numpy as np
 import datetime as dt
 from getpass import getuser
+import numpy as np
 import pandas as pd
 from FileService import FileService
 
@@ -242,7 +242,8 @@ for key, value in B_AGYS.items():
         agycodes.append(key)
 
 # loop through agycodes
-for loop_count, agyc in enumerate(agycodes):
+loop_count = 0
+for agyc in agycodes:
     # create subset of original data
     subdf = agy[agy['AgyCode'] == agyc].copy()
     # get all contract numbers in agy
@@ -253,8 +254,9 @@ for loop_count, agyc in enumerate(agycodes):
 
     # make shared services list/dict
     # subset frame to remove null/none values; then designate col tolist()
-    serv_list = subdf[subdf['MaterialTranslate'].notnull(
-    )]['MaterialTranslate'].drop_duplicates().tolist()
+    serv_list = subdf[subdf['MaterialTranslate'].notnull()]['MaterialTranslate']\
+                .drop_duplicates()\
+                .tolist()
     # added sorted() to make a-z
     serv_string = '\n'.join(sorted(serv_list))
     agy_results_dict[agyc] = serv_string
@@ -328,6 +330,8 @@ for loop_count, agyc in enumerate(agycodes):
             with pd.ExcelWriter(OUTPUTPATH+filename) as writer: # pylint: disable=abstract-class-instantiated
                 sub3df.to_excel(writer, index=False)
             print('Creating ' + filename)
+
+            loop_count += 1
 
 print('Creating manifest for ContentVersion')
 content_version.to_csv(OUTPUTPATH

@@ -8,7 +8,7 @@ import subprocess
 
 RUN_HEADCOUNT = input('Run Headcount? y/n')
 
-if RUN_HEADCOUNT is not 'y':
+if RUN_HEADCOUNT != 'y':
     subprocess.run(['python','xlsx_split.py'], check=False)
     subprocess.run(['python','pdf_split.py'], check=False)
     subprocess.run(['python','services.py'], check=False)

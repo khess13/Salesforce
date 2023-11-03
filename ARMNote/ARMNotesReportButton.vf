@@ -1,0 +1,24 @@
+<apex:page id="pg" >
+    <!--<apex:page id="pg" controller="OnLoadController"> -->
+
+    <apex:form >
+    <!--
+    <apex:actionFunction action="{!redirect}" name="OpenPage" reRender="pb,theIframe">
+        <apex:param assignTo="{!Page}" value="" name="param1"/>
+    </apex:actionFunction>
+    -->
+
+    <apex:pageBlock id="pb">
+        <apex:commandButton value="Display as PDF" onClick="window.open('/apex/ARMNotesReport');"/>
+        <apex:commandButton value="Download as Word" onClick="window.open('/apex/ARMNotesReportWord');"/>
+        
+        <!-- <apex:pageBlockButtons > -->            
+            <!-- doesn't have to be this complex --> 
+            <!-- <apex:commandButton value="ARM Notes Report" onclick="OpenPage('ARMNotesReport'); return false;"/> -->
+            <!--        </apex:pageBlockButtons>  -->
+        <!--        <apex:iframe id="theIframe" src="{!OpenPageURL}" scrolling="true"/> -->
+    </apex:pageBlock>
+
+
+</apex:form>
+</apex:page>

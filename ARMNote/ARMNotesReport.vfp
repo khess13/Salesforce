@@ -1,0 +1,73 @@
+<apex:page Controller="armNotesByAccount" renderAs="PDF" showHeader="false" sidebar="false" standardStylesheets="false" applyHtmlTag="false" applyBodyTag="false" docType="html-5.0">
+  <head>
+    <style>
+      @page{margin-left:0.25in;
+            margin-right:0.25in;
+            }
+      body {font-family: Arial; 
+            font-size:1em;
+            }
+       pre,p {font-family: Arial; 
+            font-size:1em;
+            white-space: normal;
+            display: inline;
+            }
+      table,th,td {
+              border: 1px solid;
+              border-spacing:0;
+              border-collapse:collapse;
+              text-align:left;
+            } 
+    </style>
+  </head>
+  <!-- This is for the ARM Notes report - built-in reporting truncates after the 255th character of text
+      The main VFP renders PDF and incorporates rowspan to consolidate repeated agency name / item number
+      The Word version is required because Word does not process the rowspans correctly 
+      This VFP uses different logic to add values that let us suppress the repeating values in the report
+      ** This is the HTML/PDF version ** -->
+  
+  <!-- ARM Notes Report -->
+  <apex:variable value="{!0}" var="index" /> ARM Notes Report as of
+  <nbsp></nbsp>
+  <apex:outputText styleClass="ql-syntax" value="{0,date,MM/dd/yy}">
+    <apex:param value="{!TODAY()}" />
+  </apex:outputText>
+  <br/>
+  <br/>
+  
+  <table>
+    <thead>
+      <th> Agency </th>
+      <th> No. </th>
+      <th> </th>
+      <th> Item </th>
+      <th> Agency Update </th>
+    </thead>
+    <apex:repeat value="{!armNotesByAccount}" var="key">
+      <apex:repeat value="{!armNotesByAccount[key].armNoteList}" var="keyvalue">
+        <tr>
+          <!--Agency - only display on agency's first row -->
+          <td rowspan="{!armNotesByAccount[key].numOfNotes}" style="display:{!IF(CASESAFEID(keyvalue.id)==CASESAFEID(armNotesByAccount[key].firstOfList), 'table-data','none' )};">
+            {!keyvalue.Account__r.Agency_Acronym__c}
+          </td>
+          <!--Row / Agency number - increment only on new agency -->
+          <apex:variable value="{!IF(CASESAFEID(keyvalue.id)==CASESAFEID(armNotesByAccount[key].firstOfList), index + 1,index )}" var="index"
+          />
+          <!--Row / Agency number - only display on agency's first row -->
+          <td rowspan="{!armNotesByAccount[key].numOfNotes}" style="display:{!IF(CASESAFEID(keyvalue.id)==CASESAFEID(armNotesByAccount[key].firstOfList), 'table-data','none' )};">
+            {!index}.
+          </td>
+          <td>
+            {!keyvalue.sort_order__c}
+          </td>
+          <td>
+            {!keyvalue.Name}
+          </td>
+          <td>
+           <apex:outputText escape="false" value="{!keyvalue.Note_Text__c}"/>
+          </td>
+        </tr>
+      </apex:repeat>
+    </apex:repeat>
+  </table>
+</apex:page>

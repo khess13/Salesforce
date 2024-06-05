@@ -1,0 +1,17 @@
+{
+	"folders": [
+		{
+			"path": "."
+		},
+		{
+			"path": "../Gov Off Salesforce AcelerateSC/FOIA-pull"
+		},
+		{
+			"path": "../EndUserStandard"
+		},
+		{
+			"path": "../QuarterlyGLReview"
+		}
+	],
+	"settings": {}
+}

@@ -19,7 +19,7 @@ class FileService:
             temp_path = self.data_directory
         else:
             temp_path = altpath
-        
+
         files_in_dir = os.listdir(temp_path)
         # tilda indicates open temp file, excluding these
         if not ext is None:
@@ -28,10 +28,10 @@ class FileService:
         else:
             target_files = [temp_path + f for f in files_in_dir
                             if '~' not in f]
-            
+
         if len(target_files) == 0:
             raise ValueError('No files found, try checking extension')
-    
+
         return target_files
 
     def clear_destination_folder(self) -> None:
@@ -42,10 +42,10 @@ class FileService:
             os.mkdir(self.destination_dir)
         except Exception:
             os.mkdir(self.destination_dir)
-    
+
     def copy_file(self, file_name) -> None:
         """Copy files from data folder to destination"""
-        shutil.copyfile(self.data_directory + file_name, 
+        shutil.copyfile(self.data_directory + file_name,
                         self.destination_dir + file_name)
 
     ## dependent files ##
@@ -53,16 +53,16 @@ class FileService:
         """Gets dependent files from checkers"""
         dep_files = self.__check_dependent_files()
         return dep_files
-            
+
     def __check_dependent_files(self) -> dict:
         """Are all files accounted for and returns file location"""
-        # SFexport - contract.csv
-        # SFexport - extract.csv
+        # SFexport - contract.csv - Contract Object
+        # SFexport - extract.csv - Account Object
         # BOexport - S&D Salesforce - DTO Services.xlsx <-- removing?
         # BOexport - headcount.xlsx --- run at different time, rm?
-        # BOexport - S&D Salesforce - Scheduled.pdf
-        # BOexport - SDMap.xlsx
-        # ECCexport - EXPORT.xlsx
+        # BOexport - S&D Salesforce - Scheduled.pdf - BO invoices
+        # BOexport - SDMap.xlsx - mapping for materials
+        # ECCexport - EXPORT.xlsx - ECC invoice data
         # SF map for dataloader - agencyservices.sdl
         # SF map for dataloader - hc.sdl
         # SF map for dataloader - contract_services.sdl
@@ -105,7 +105,7 @@ class FileService:
             raise ValueError(
                 f'Check Data folder. Count is {str(len(files_from_data))}')
         return files_labeled_from_data
-    
+
     def __file_date_checker(self, sus_file) -> bool:
         """Check staleness of file"""
         if sus_file[-3:] == 'sdl':

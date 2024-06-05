@@ -15,6 +15,11 @@ Meetings/
 Services/
 Data/
 .sfdx/
+.vscode/
+ARM Report/
+Contracts Report/
+Other XLSX/
+SFInvoice/
 
 *.xls
 *.xlsx
@@ -23,3 +28,4 @@ Data/
 *.pdf
 *.gif
 *.txt
+*.docx

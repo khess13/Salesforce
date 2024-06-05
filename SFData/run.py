@@ -12,5 +12,6 @@ if RUN_HEADCOUNT != 'y':
     subprocess.run(['python','xlsx_split.py'], check=False)
     subprocess.run(['python','pdf_split.py'], check=False)
     subprocess.run(['python','services.py'], check=False)
+    subprocess.run(['python','emailer.py'], check=False)
 else:
     subprocess.run(['python','headcount.py'], check=False)

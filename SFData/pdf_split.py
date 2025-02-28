@@ -8,8 +8,13 @@ import getpass
 import datetime as dt
 import pandas as pd
 from tabula import read_pdf
-from PyPDF2 import PdfFileReader, PdfFileWriter
+from PyPDF2 import PdfReader, PdfWriter
 from FileService import FileService
+
+#2024-12-02 PdfFileReader deprecated -> PdfReader
+#2024-12-02 PdfFileWriter deprecated -> PdfWriter
+#2024-12-02 .numPage dep -> len(.pages)
+#2024-12-02 .getPage(pageNumber) -> reader.pages[page_number]
 
 ROOT = os.getcwd()
 DATESTAMP = str(dt.datetime.now().strftime('%m-%d-%Y'))
@@ -51,11 +56,12 @@ contentVersion = pd.DataFrame(columns=['Title',
                                        'FirstPublishLocationId'])
 
 # split PDF to destination
-input_pdf = PdfFileReader(open(FS_FILE_DICT.get('BOInv'), 'rb'))
-for i in range(input_pdf.numPages):
+input_pdf = PdfReader(open(FS_FILE_DICT.get('BOInv'), 'rb'))
+for i in range(len(input_pdf.pages)):
     # moving here to clear writer
-    output = PdfFileWriter()
-    output.addPage(input_pdf.getPage(i))
+    output = PdfWriter()
+    #output.addPage(input_pdf.getPage(i))
+    output.add_page(input_pdf.pages[i])
     with open(f'{OUTPUTPATH}document-page{i}.pdf', 'wb') as outputStream:
         output.write(outputStream)
 
@@ -110,9 +116,9 @@ for loop_count, p in enumerate(pdfs_to_parse):
                                       filename,
                                       idofaccount]
     print('Logging '
-          + printfilename 
+          + printfilename
           + ' '
-          + invoiceno 
+          + invoiceno
           + ' - '
           + filename)
 

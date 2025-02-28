@@ -1,6 +1,9 @@
 """
 Splits xlsx into individual files for upload
 Creates ContentVersion for SF Dataloader
+Fills in missing data and dates from ECC
+Aligns account numbers for SF consumption
+Creates services recap for each account -- for billable and nonbillable
 """
 import os
 import re
@@ -47,7 +50,7 @@ REMOVE_SCHOOL = ['SCHOOL', 'DISTRICT', 'SCH DIST']
 RE_COUNTY = r'^[A-Z]+\W{1}CO[A-Z]*'
 # keyword in contract description for subset agencies
 B_AGYS = {'E240B': 'EMERGENCY',
-          'H630B': 'FIRST STEPS',
+          # 'H630B': 'FIRST STEPS', became own agency
           'N200B': 'CRIMINAL JUSTICE'}
 
 
@@ -68,6 +71,10 @@ def create_acct_code(data: str) -> str:
         customer_number_first_four = customer_number[:4]
         customer_number_len = len(customer_number)
 
+    # PASCAL is apart of CHE with same account number
+    if customer_number_first_four == 'H030' and contract_desc == "PASCAL IT BILLING":
+        return 'H030B'
+    
     # because BOFI is same and different
     if customer_number_first_four == 'R230':
         if customer_number == 'R230001':

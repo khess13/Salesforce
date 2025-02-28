@@ -29,3 +29,6 @@ SFInvoice/
 *.gif
 *.txt
 *.docx
+*.code-workspace
+
+auth.py

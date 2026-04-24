@@ -73,7 +73,8 @@ class FileService:
         if len(files_from_data) == 11:
             for file in files_from_data:
                 if self.__file_date_checker(file) is False:
-                    raise Exception(f'{file} is stale')
+                    raise ValueError(f'{file} is stale')
+                    continue
                 if 'extract' in file:
                     files_labeled_from_data['SFAcct'] = file
                 elif 'EXPORT' in file:
@@ -83,7 +84,7 @@ class FileService:
                 # be careful of other files with similiar names
                 elif 'contract.csv' in file:
                     files_labeled_from_data['Contracts'] = file
-                elif 'Scheduled' in file:
+                elif 'S_D Salesforce' in file:
                     files_labeled_from_data['BOInv'] = file
                 elif 'SDMap' in file:
                     files_labeled_from_data['SDMap'] = file

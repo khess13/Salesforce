@@ -74,7 +74,7 @@ def create_acct_code(data: str) -> str:
     # PASCAL is apart of CHE with same account number
     if customer_number_first_four == 'H030' and contract_desc == "PASCAL IT BILLING":
         return 'H030B'
-    
+
     # because BOFI is same and different
     if customer_number_first_four == 'R230':
         if customer_number == 'R230001':
@@ -141,12 +141,13 @@ def create_acct_code(data: str) -> str:
     #because gov school is being charged to 2 diff acct numbers
     if customer_number == '4003840':
         return 'H650'
-    # other numerical accounts
+    # include other numerical accounts by name
     if contract_desc in ['RIVERBANKS ZOO',
                          'SC INTERACTIVE',
                          'SC EDUCATION LOTTERY',
                          'SC BAR ASSOCIATION',
-                         'SC BAR ASSOCIATION - NON-BILLABLE']:
+                         'SC BAR ASSOCIATION - NON-BILLABLE',
+                         'ESTILL, TOWN OF']:
         return customer_number
 
     # counties

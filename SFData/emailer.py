@@ -1,25 +1,40 @@
-"""Sends copy of ECC data to Scott"""
+"""Sends a copy of ECC billing data to the billing contact."""
+from __future__ import annotations
+
 import datetime as dt
-from os import getcwd
+import os
+
 import outlook
 from FileService import FileService
 
-ROOT = getcwd()
-OUTPUTPATH = ROOT
-EMAIL_ADD = 'scott.broam@admin.sc.gov'
-TODAY_DATE = dt.datetime.now()
-MONTH_NAME = TODAY_DATE.strftime("%B")
+ROOT = os.getcwd()
+EMAIL_ADDRESS = 'scott.broam@admin.sc.gov'
 
-fs = FileService(ROOT,OUTPUTPATH)
-FS_FILE_DICT = fs.get_dependent_file_dict()
-attachment_location = FS_FILE_DICT.get('ECCInv')
 
-ans = input(f'Is the current month {MONTH_NAME}? y/n')
-if ans == 'n':
-    MONTH_NAME = input('Enter month name:')
+def get_month_name() -> str:
+    """Return the current month name, with an override prompt if needed."""
+    month_name = dt.datetime.now().strftime('%B')
+    answer = input(f'Is the current month {month_name}? y/n: ')
+    if answer.strip().lower() == 'n':
+        month_name = input('Enter month name: ')
+    return month_name
 
-mailer = outlook.emailMessage(subject=f'ECC Billing Data for {MONTH_NAME}',
-                              emailbody = 'Please see attached.', 
-                              toAddress = EMAIL_ADD,
-                              attachmentPath = attachment_location)
-mailer.send()
+
+def main() -> None:
+    fs = FileService(ROOT, ROOT)
+    file_dict = fs.get_dependent_file_dict()
+    attachment_path = file_dict['ECCInv']
+    month_name = get_month_name()
+
+    mailer = outlook.EmailMessage(
+        subject=f'ECC Billing Data for {month_name}',
+        email_body='Please see attached.',
+        to_address=EMAIL_ADDRESS,
+        attachment_path=attachment_path,
+    )
+    mailer.send()
+    print('Email sent.')
+
+
+if __name__ == '__main__':
+    main()

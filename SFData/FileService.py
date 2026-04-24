@@ -1,121 +1,126 @@
 """
-Supports recurring file operations
+Supports recurring file operations.
 """
 import os
 import shutil
+from typing import Dict, List, Optional
+
 import arrow
 
+
 class FileService:
-    """Provides directory clearing for dump directories"""
-    def __init__(self, file_source_dir, destination_dir):
+    """Manages source and destination directories for data pipeline files."""
+
+    def __init__(self, file_source_dir: str, destination_dir: str) -> None:
         self.file_source_dir = file_source_dir
-        self.data_directory = file_source_dir + "\\Data\\"
+        self.data_directory = os.path.join(file_source_dir, 'Data')
         self.destination_dir = destination_dir
 
-    ## directory ops##
-    def get_files_from_dir(self, ext=None, altpath=None) -> list:
-        """gathers files from target directory by file type"""
-        if altpath is None:
-            temp_path = self.data_directory
-        else:
-            temp_path = altpath
+    # ---------------------------------------------------------------------------
+    # Directory operations
+    # ---------------------------------------------------------------------------
 
-        files_in_dir = os.listdir(temp_path)
-        # tilda indicates open temp file, excluding these
-        if not ext is None:
-            target_files = [temp_path + f for f in files_in_dir
-                            if ext in f and '~' not in f]
-        else:
-            target_files = [temp_path + f for f in files_in_dir
-                            if '~' not in f]
+    def get_files_from_dir(
+        self,
+        ext: Optional[str] = None,
+        altpath: Optional[str] = None,
+    ) -> List[str]:
+        """
+        Return full paths of files in the data directory (or altpath).
+        Skips temp files indicated by a tilde in the filename.
+        Optionally filters by file extension substring.
+        """
+        target_dir = altpath if altpath is not None else self.data_directory
+        files_in_dir = os.listdir(target_dir)
 
-        if len(target_files) == 0:
-            raise ValueError('No files found, try checking extension')
+        target_files = [
+            os.path.join(target_dir, f) for f in files_in_dir
+            if '~' not in f and (ext is None or ext in f)
+        ]
+
+        if not target_files:
+            raise ValueError(
+                f'No files found in {target_dir}. Check extension filter: {ext}'
+            )
 
         return target_files
 
     def clear_destination_folder(self) -> None:
-        """clears destination folder"""
+        """Delete and recreate the destination folder."""
         print('Clearing old data.')
-        try:
+        if os.path.exists(self.destination_dir):
             shutil.rmtree(self.destination_dir)
-            os.mkdir(self.destination_dir)
-        except Exception:
-            os.mkdir(self.destination_dir)
+        os.makedirs(self.destination_dir, exist_ok=True)
 
-    def copy_file(self, file_name) -> None:
-        """Copy files from data folder to destination"""
-        shutil.copyfile(self.data_directory + file_name,
-                        self.destination_dir + file_name)
+    def copy_file(self, file_name: str) -> None:
+        """Copy a file from the data directory to the destination directory."""
+        src = os.path.join(self.data_directory, file_name)
+        dst = os.path.join(self.destination_dir, file_name)
+        shutil.copyfile(src, dst)
 
-    ## dependent files ##
-    def get_dependent_file_dict(self) -> dict:
-        """Gets dependent files from checkers"""
-        dep_files = self.__check_dependent_files()
-        return dep_files
+    # ---------------------------------------------------------------------------
+    # Dependent file resolution
+    # ---------------------------------------------------------------------------
 
-    def __check_dependent_files(self) -> dict:
-        """Are all files accounted for and returns file location"""
-        # SFexport - contract.csv - Contract Object
-        # SFexport - extract.csv - Account Object
-        # BOexport - S&D Salesforce - DTO Services.xlsx <-- removing?
-        # BOexport - headcount.xlsx --- run at different time, rm?
-        # BOexport - S&D Salesforce - Scheduled.pdf - BO invoices
-        # BOexport - SDMap.xlsx - mapping for materials
-        # ECCexport - EXPORT.xlsx - ECC invoice data
-        # SF map for dataloader - agencyservices.sdl
-        # SF map for dataloader - hc.sdl
-        # SF map for dataloader - contract_services.sdl
-        # SF map for dataloader - pdfimportmap.sdl
-        # SF map for dataloader - dtoservices.sdl
+    def get_dependent_file_dict(self) -> Dict[str, str]:
+        """Locate and label all required input files. Raises if any are missing or stale."""
+        return self._check_dependent_files()
+
+    def _check_dependent_files(self) -> Dict[str, str]:
+        """
+        Verify the expected 11 files are present and not stale.
+        Returns a dict mapping logical file keys to their full paths.
+
+        Expected files:
+            SFAcct    — SFexport extract.csv (Account Object)
+            Contracts — SFexport contract.csv (Contract Object)
+            ECCInv    — ECCexport EXPORT.xlsx (ECC invoice data)
+            HR        — BOexport Headcount.xlsx
+            BOInv     — BOexport S_D Salesforce Scheduled.pdf (BO invoices)
+            SDMap     — BOexport SDMap.xlsx (material mapping)
+            + 5 SDL dataloader map files (not date-checked)
+        """
         files_from_data = self.get_files_from_dir()
-        files_labeled_from_data = {}
-        if len(files_from_data) == 11:
-            for file in files_from_data:
-                if self.__file_date_checker(file) is False:
-                    raise ValueError(f'{file} is stale')
-                    continue
-                if 'extract' in file:
-                    files_labeled_from_data['SFAcct'] = file
-                elif 'EXPORT' in file:
-                    files_labeled_from_data['ECCInv'] = file
-                elif 'Headcount' in file:
-                    files_labeled_from_data['HR'] = file
-                # be careful of other files with similiar names
-                elif 'contract.csv' in file:
-                    files_labeled_from_data['Contracts'] = file
-                elif 'S_D Salesforce' in file:
-                    files_labeled_from_data['BOInv'] = file
-                elif 'SDMap' in file:
-                    files_labeled_from_data['SDMap'] = file
-                '''
-                elif 'AgencyServices' in file:
-                    files_labeled_from_data['AgencyServices'] = file
-                elif 'agencyservices.sdl' == file:
-                    files_labeled_from_data['agyservSDL'] = file
-                elif 'hc.sdl' == file:
-                    files_labeled_from_data['hcSDL'] = file
-                elif 'contract_services.sdl' == file:
-                    files_labeled_from_data['contractSDL'] = file
-                elif 'pdfimportmap.sdl' == file:
-                    files_labeled_from_data['pdfimportSDL'] = file
-                elif 'dtoservices.sdl' == file:
-                    files_labeled_from_data['dtoSDL'] = file
-                '''
-        else:
-            raise ValueError(
-                f'Check Data folder. Count is {str(len(files_from_data))}')
-        return files_labeled_from_data
 
-    def __file_date_checker(self, sus_file) -> bool:
-        """Check staleness of file"""
-        if sus_file[-3:] == 'sdl':
-            # skip checking these files
+        if len(files_from_data) != 11:
+            raise ValueError(
+                f'Expected 11 files in Data folder, found {len(files_from_data)}.'
+            )
+
+        labeled: Dict[str, str] = {}
+        for file in files_from_data:
+            if not self._file_date_checker(file):
+                raise ValueError(f'Stale file: {file}')
+
+            if 'extract' in file:
+                labeled['SFAcct'] = file
+            elif 'EXPORT' in file:
+                labeled['ECCInv'] = file
+            elif 'Headcount' in file:
+                labeled['HR'] = file
+            elif 'contract.csv' in file:
+                labeled['Contracts'] = file  # note: similar names — be careful
+            elif 'S_D Salesforce' in file:
+                labeled['BOInv'] = file
+            elif 'SDMap' in file:
+                labeled['SDMap'] = file
+
+        return labeled
+
+    def _file_date_checker(self, filepath: str) -> bool:
+        """
+        Return False if a file is considered stale.
+        SDL files are excluded from the check.
+        extract and SDMap files have a 200-day window (TODO: restore to 90).
+        All other files have a 90-day window (TODO: restore to 7).
+        """
+        _, ext = os.path.splitext(filepath)
+        if ext == '.sdl':
             return True
-        elif 'extract' in sus_file or 'SDMap' in sus_file:
-            no_of_days = arrow.now().shift(days=-200) #s/b 90
+
+        if 'extract' in filepath or 'SDMap' in filepath:
+            cutoff = arrow.now().shift(days=-200)  # TODO: restore to -90
         else:
-            no_of_days = arrow.now().shift(days=-90) #s/b 7
-        if arrow.get(os.stat(sus_file).st_mtime) > no_of_days:
-            return True
-        return False
+            cutoff = arrow.now().shift(days=-90)   # TODO: restore to -7
+
+        return arrow.get(os.stat(filepath).st_mtime) > cutoff

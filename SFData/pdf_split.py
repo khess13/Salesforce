@@ -1,133 +1,154 @@
 """
-Splits pdfs into individual files for upload
-Creates ContentVersion for SF Dataloader
+Splits a BO invoice PDF into per-page files for SF Dataloader upload.
+Creates a ContentVersion manifest CSV.
 """
+from __future__ import annotations
+
+import datetime as dt
+import getpass
 import os
 import re
-import getpass
-import datetime as dt
+from typing import Dict
+
 import pandas as pd
 from tabula import read_pdf
 from PyPDF2 import PdfReader, PdfWriter
+
 from FileService import FileService
 
-#2024-12-02 PdfFileReader deprecated -> PdfReader
-#2024-12-02 PdfFileWriter deprecated -> PdfWriter
-#2024-12-02 .numPage dep -> len(.pages)
-#2024-12-02 .getPage(pageNumber) -> reader.pages[page_number]
-
 ROOT = os.getcwd()
-DATESTAMP = str(dt.datetime.now().strftime('%m-%d-%Y'))
-CURR_ID = getpass.getuser()
-# formerly to user desktop, avoid onedrive nagging
-OUTPUTPATH = 'C:\\Users\\'+CURR_ID+'\\PDFDrop\\'
+DATESTAMP = dt.datetime.now().strftime('%m-%d-%Y')
+OUTPUTPATH = os.path.join('C:\\', 'Users', getpass.getuser(), 'PDFDrop')
 
-# helper functions
-def agycode_cleaner(agy_code) -> str:
-    """ because some agycodes are numbers in report"""
+
+# ---------------------------------------------------------------------------
+# Helpers
+# ---------------------------------------------------------------------------
+
+def clean_agycode(agy_code: str) -> str:
+    """
+    Normalise agency codes that were stored as floats in the source report
+    (e.g. '123.0' -> '123').
+    """
     try:
-        agy_code = float(agy_code)
-        # remove .0; 0 values after decimal f = float
-        newCode = '{:0.0f}'.format(agy_code)
-        return newCode
-    except Exception:
+        return '{:0.0f}'.format(float(agy_code))
+    except (ValueError, TypeError):
         return str(agy_code)
 
 
-# Load dependent files
-fs = FileService(ROOT,OUTPUTPATH)
-FS_FILE_DICT = fs.get_dependent_file_dict()
-SF_ACCT_INFO = pd.read_csv(FS_FILE_DICT.get('SFAcct'))
+def build_title(
+    inv_date_iso: str,
+    invoice_amt: str,
+    customer_name: str,
+    invoice_no: str,
+) -> str:
+    """Construct the standard ContentVersion title string."""
+    return (
+        f'{inv_date_iso} - {invoice_amt} - {customer_name}'
+        f' - Invoice {invoice_no} - Shared Services'
+    )
 
-# build dictionary because i don't know how to do this right
-SF_ACCT_INFO_DICT = {}
-for index, row in SF_ACCT_INFO.iterrows():
-    SF_ACCT_INFO_DICT[row['SCEIS_CODE__C']] = row['ID']
 
-
-# Create/clear destination folder
-fs.clear_destination_folder()
-
-# set up ContentVersion
-contentVersion = pd.DataFrame(columns=['Title',
-                                       'Description',
-                                       'VersionData',
-                                       'PathOnClient',
-                                       'FirstPublishLocationId'])
-
-# split PDF to destination
-input_pdf = PdfReader(open(FS_FILE_DICT.get('BOInv'), 'rb'))
-for i in range(len(input_pdf.pages)):
-    # moving here to clear writer
-    output = PdfWriter()
-    #output.addPage(input_pdf.getPage(i))
-    output.add_page(input_pdf.pages[i])
-    with open(f'{OUTPUTPATH}document-page{i}.pdf', 'wb') as outputStream:
-        output.write(outputStream)
-
-# gather split files for read
-pdfs_to_parse = fs.get_files_from_dir(altpath=OUTPUTPATH)
-for loop_count, p in enumerate(pdfs_to_parse):
-    # TODO - something is wrong
-    pdfpage = read_pdf(p, pages='all')
+def parse_pdf_page(page_path: str) -> dict:
+    """
+    Extract invoice fields from a single-page PDF.
+    Returns a dict with agycode, invoice date, number, amount, customer name.
+    """
+    pdfpage = read_pdf(page_path, pages='all')
     df = pdfpage[0]
     df.dropna(subset=['Total'], how='all', inplace=True)
 
-    # clean up agycode, SCI code was float
-    agycode = agycode_cleaner(df.iloc[0, 0])
-    # changes date slash to dash
-    pdate = df.iloc[0, 3].replace('/', '-')
-    # had to remove random characters like I
-    pdate = re.sub(r'[A-z]*', '', pdate)
-    # because assumed datatype was float
-    invoiceno = str(df.iloc[0, 4])[:-2]
-    invoiceamt = str(df.iloc[len(df)-1, 10])
-    # rebuild date for sort
-    tdate = '20'\
-            + pdate[-2:] + '-'\
-            + pdate[:2] + '-'\
-            + pdate[3:5]
-    gendate = DATESTAMP
-    filename = p
+    agycode = clean_agycode(df.iloc[0, 0])
 
-    # outputpath = pdfdrop
-    customername = str(df.iloc[0, 2])
-    titledate = tdate + ' - ' +\
-        invoiceamt + ' - '\
-        + customername\
-        + ' - Invoice '\
-        + invoiceno +\
-        ' - Shared Services'
-    printfilename = agycode\
-        + ' Invoice Date '\
-        + pdate
-    desc = 'S&D Billing for services on '\
-        + pdate\
-        + '. Generated on '\
-        + gendate
+    # Normalise date: replace slashes, strip stray alpha chars
+    raw_date = df.iloc[0, 3].replace('/', '-')
+    pdate = re.sub(r'[A-Za-z]*', '', raw_date)
 
-    # gets Salesforce ID for account
-    idofaccount = SF_ACCT_INFO_DICT[agycode]
+    invoice_no = str(df.iloc[0, 4])[:-2]
+    invoice_amt = str(df.iloc[len(df) - 1, 10])
+    customer_name = str(df.iloc[0, 2])
 
-    # generating ContentVersion manifest
-    contentVersion.loc[loop_count] = [titledate,
-                                      desc,
-                                      filename,
-                                      filename,
-                                      idofaccount]
-    print('Logging '
-          + printfilename
-          + ' '
-          + invoiceno
-          + ' - '
-          + filename)
+    # Rebuild date as YYYY-MM-DD for sort-friendly filenames
+    inv_date_iso = '20' + pdate[-2:] + '-' + pdate[:2] + '-' + pdate[3:5]
 
-print('Creating manifest for ContentVersion')
-contentVersion.to_csv(OUTPUTPATH
-                      + 'ContentVersion Generated On '
-                      + DATESTAMP
-                      + '.csv',
-                      index=False)
-fs.copy_file('pdfimportmap.sdl')
+    return {
+        'agycode': agycode,
+        'pdate': pdate,
+        'inv_date_iso': inv_date_iso,
+        'invoice_no': invoice_no,
+        'invoice_amt': invoice_amt,
+        'customer_name': customer_name,
+    }
 
-print('Operation Complete!')
+
+# ---------------------------------------------------------------------------
+# Entry point
+# ---------------------------------------------------------------------------
+
+def main() -> None:
+    fs = FileService(ROOT, OUTPUTPATH)
+    file_dict = fs.get_dependent_file_dict()
+    fs.clear_destination_folder()
+
+    sf_acct_df = pd.read_csv(file_dict['SFAcct'])
+    sf_id_lookup: Dict[str, str] = (
+        sf_acct_df
+        .dropna(subset=['SCEIS_CODE__C'])
+        .set_index('SCEIS_CODE__C')['ID']
+        .to_dict()
+    )
+
+    # Split source PDF into individual page files
+    reader = PdfReader(open(file_dict['BOInv'], 'rb'))
+    for i in range(len(reader.pages)):
+        writer = PdfWriter()
+        writer.add_page(reader.pages[i])
+        page_path = os.path.join(OUTPUTPATH, f'document-page{i}.pdf')
+        with open(page_path, 'wb') as out_stream:
+            writer.write(out_stream)
+
+    # Parse each page and build ContentVersion manifest
+    cv_rows = []
+    split_pages = fs.get_files_from_dir(altpath=OUTPUTPATH)
+
+    for page_path in split_pages:
+        fields = parse_pdf_page(page_path)
+
+        title = build_title(
+            fields['inv_date_iso'],
+            fields['invoice_amt'],
+            fields['customer_name'],
+            fields['invoice_no'],
+        )
+        desc = (
+            f"S&D Billing for services on {fields['pdate']}."
+            f' Generated on {DATESTAMP}'
+        )
+        sf_id = sf_id_lookup[fields['agycode']]
+
+        cv_rows.append({
+            'Title': title,
+            'Description': desc,
+            'VersionData': page_path,
+            'PathOnClient': page_path,
+            'FirstPublishLocationId': sf_id,
+        })
+
+        print(
+            f"Logging {fields['agycode']} Invoice Date {fields['pdate']}"
+            f" {fields['invoice_no']} - {page_path}"
+        )
+
+    print('Creating manifest for ContentVersion')
+    content_version_df = pd.DataFrame(cv_rows)
+    content_version_df.to_csv(
+        os.path.join(OUTPUTPATH, f'ContentVersion Generated On {DATESTAMP}.csv'),
+        index=False,
+    )
+
+    fs.copy_file('pdfimportmap.sdl')
+    print('Operation complete.')
+
+
+if __name__ == '__main__':
+    main()

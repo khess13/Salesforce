@@ -1,42 +1,47 @@
 """
-Generates file to update headcount stat in SF
+Generates a file to update the headcount statistic in Salesforce.
 """
-import os
+from __future__ import annotations
+
 import datetime as dt
+import os
+
 import pandas as pd
 from FileService import FileService
 
 ROOT = os.getcwd()
-OUTPUTPATH = ROOT + '\\Headcount\\'
-fs = FileService(ROOT,OUTPUTPATH)
-FS_ACCT_DICT = fs.get_dependent_file_dict()
-DATESTAMP = str(dt.datetime.now().strftime('%m-%d-%Y'))
-TARGET_FIELD = 'NUMBEROFEMPLOYEES'
-
-#  dependent files
-SF_ACCT_DICT = pd.read_csv(FS_ACCT_DICT.get('SFAcct'))
-
-# get all xlsx in root
-XLSX = fs.get_files_from_dir(ext='xlsx')
-fs.clear_destination_folder()
-xdf = pd.read_excel(FS_ACCT_DICT.get('HR'))
+OUTPUTPATH = os.path.join(ROOT, 'Headcount')
+DATESTAMP = dt.datetime.now().strftime('%m-%d-%Y')
 
 
-#build dictionary because i don't know how to do this right
-acctid_dict = {}
-for index, row in SF_ACCT_DICT.iterrows():
-    acctid_dict[row['SCEIS_CODE__C']] = row['ID']
+def main() -> None:
+    fs = FileService(ROOT, OUTPUTPATH)
+    file_dict = fs.get_dependent_file_dict()
+    fs.clear_destination_folder()
 
-filename = 'Headcount - Created on ' + DATESTAMP + '.csv'
-for index, row in xdf.iterrows():
-    try:
-        xdf.loc[index, 'SalesforceAcctID'] = acctid_dict[row['Personnel Area - Key']]
-    except Exception:
-        continue
-#drop personnel areas without SalesforceAcctID
-xdf.dropna(subset=['SalesforceAcctID'], inplace=True)
-xdf.to_csv(OUTPUTPATH+filename, index=False)
+    sf_acct_df = pd.read_csv(file_dict['SFAcct'])
+    headcount_df: pd.DataFrame = pd.read_excel(file_dict['HR'])  # type: ignore[assignment]
 
-fs.copy_file('hc.sdl')
+    # Build {SCEIS_CODE: SalesforceID} lookup
+    acctid_lookup = (
+        sf_acct_df
+        .dropna(subset=['SCEIS_CODE__C'])
+        .set_index('SCEIS_CODE__C')['ID']
+        .to_dict()
+    )
 
-print('Ops complete!')
+    # Map Salesforce IDs onto headcount rows; unmatched rows get NaN
+    headcount_df['SalesforceAcctID'] = (
+        headcount_df['Personnel Area - Key'].map(acctid_lookup)
+    )
+    headcount_df.dropna(subset=['SalesforceAcctID'], inplace=True)
+
+    filename = f'Headcount - Created on {DATESTAMP}.csv'
+    headcount_df.to_csv(os.path.join(OUTPUTPATH, filename), index=False)
+
+    fs.copy_file('hc.sdl')
+    print('Operation complete.')
+
+
+if __name__ == '__main__':
+    main()

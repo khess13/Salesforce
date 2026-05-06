@@ -4,6 +4,10 @@ Headcount runs on a separate day from the others.
 """
 import subprocess
 
+def run_data_refresh_pipline( ) -> None:
+    """Run the data refresh pipeline."""
+    print('Refreshing data from Salesforce')
+    subprocess.run(['python', 'SFDataRetrieve.py'], check=False)
 
 def run_standard_pipeline() -> None:
     """Run the standard daily billing pipeline."""
@@ -24,6 +28,7 @@ def main() -> None:
     if answer == 'y':
         run_headcount_pipeline()
     else:
+        run_data_refresh_pipline()
         run_standard_pipeline()
 
 

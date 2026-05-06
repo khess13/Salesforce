@@ -1,36 +1,76 @@
 """
-Salesforce data retrieval via REST API.
-Incomplete — OAuth and response parsing still need implementation.
+Retrieves Account and Contract objects from Salesforce
+and writes them to the Data folder for downstream scripts.
+
+Replaces manual CSV exports of extract.csv and contract.csv.
+
+Requires: pip install simple-salesforce
 """
-from __future__ import annotations
 
-from typing import List
-
+import os
 import pandas as pd
-import requests
+from simple_salesforce import Salesforce, SalesforceAuthenticationFailed
+
+# --- credentials ---
+# Move these to environment variables or a config file.
+# Never commit credentials to source control.
+SF_USERNAME = os.environ.get('SF_USERNAME', '')
+SF_PASSWORD = os.environ.get('SF_PASSWORD', '')
+SF_TOKEN    = os.environ.get('SF_TOKEN', '')    # security token, not a session token
+SF_DOMAIN   = 'login'                           # use 'test' for sandbox
+
+# --- output ---
+ROOT     = os.getcwd()
+DATA_DIR = ROOT + '\\Data\\'
+
+QUERIES = {
+    'extract.csv': "SELECT Id, SCEIS_CODE__C FROM Account",
+    'contract.csv': (
+        "SELECT AccountId, Contract_Type__C, Administrative_Services__C "
+        "FROM Contract"
+    ),
+}
 
 
-class SFDataRetrieve:
-    """Fetch Salesforce object data and write to CSV."""
+def main():
+    if not all([SF_USERNAME, SF_PASSWORD, SF_TOKEN]):
+        raise EnvironmentError(
+            'SF_USERNAME, SF_PASSWORD, and SF_TOKEN must be set '
+            'as environment variables before running this script.'
+        )
 
-    def __init__(self, api_url: str, object_list: List[str]) -> None:
-        self.api_url = api_url
-        self.object_list = object_list
+    if not os.path.exists(DATA_DIR):
+        raise FileNotFoundError(
+            f'Data directory not found: {DATA_DIR}\n'
+            'Expected the standard project layout with a Data\\ subfolder.'
+        )
 
-    def get_objects(self) -> requests.Response:
-        """
-        Request object data from the Salesforce REST API.
-        TODO: add request timeout
-        TODO: implement OAuth — see Salesforce REST API docs:
-              https://developer.salesforce.com/docs/atlas.en-us.api_rest.meta/api_rest/intro_rest_compatible_editions.htm
-        """
-        return requests.get(self.api_url, timeout=30)
+    try:
+        sf = Salesforce(
+            username=SF_USERNAME,
+            password=SF_PASSWORD,
+            security_token=SF_TOKEN,
+            domain=SF_DOMAIN,
+        )
+        print('Connected to Salesforce.\n')
+    except SalesforceAuthenticationFailed as e:
+        raise SystemExit(f'Authentication failed: {e}') from e
 
-    def parse_json(self, input_path: str, output_path: str) -> None:
-        """
-        Parse a Salesforce JSON response file and write to CSV.
-        TODO: extend to loop over each object in self.object_list.
-        """
-        with open(input_path, encoding='utf-8') as input_file:
-            df = pd.read_json(input_file)
-        df.to_csv(output_path, encoding='utf-8', index=False)
+    for filename, query in QUERIES.items():
+        object_name = query.split('FROM ')[-1]
+        print(f'Querying {object_name}...')
+        results = sf.query_all(query)
+        records = results['records']
+        df = pd.DataFrame.from_records(
+            [{k: v for k, v in r.items() if k != 'attributes'} for r in records]
+        )
+        print(f'  {len(df)} records retrieved.')
+        out_path = DATA_DIR + filename
+        df.to_csv(out_path, index=False)
+        print(f'  Saved to {out_path}\n')
+
+    print('Done. Data folder is up to date.')
+
+
+if __name__ == '__main__':
+    main()

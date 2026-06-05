@@ -12,6 +12,8 @@ from getpass import getuser
 import numpy as np
 import pandas as pd
 from FileService import FileService
+from jinja2 import Template
+from weasyprint import HTML
 
 ROOT = os.getcwd()
 DATESTAMP = str(dt.datetime.now().strftime('%m-%d-%Y'))
@@ -52,6 +54,29 @@ RE_COUNTY = r'^[A-Z]+\W{1}CO[A-Z]*'
 B_AGYS = {'E240B': 'EMERGENCY',
           # 'H630B': 'FIRST STEPS', became own agency
           'N200B': 'CRIMINAL JUSTICE'}
+
+# load the template once
+_TEMPLATE_PATH = os.path.join(os.path.dirname(__file__), "recap_template.html")
+with open(_TEMPLATE_PATH, encoding="utf-8") as _f:
+    RECAP_TEMPLATE = Template(_f.read())
+
+
+def make_recap_pdf(line_items, header, out_path):
+    """Group one account's lines by department and write a PDF."""
+    line_items = line_items.copy()
+    fallback = "Account-wide"          # or: header["customer_name"]
+    line_items["Department Name"] = line_items["Department Name"].apply(
+        lambda v: fallback if (pd.isna(v) or str(v).strip() == "") else v
+    )
+    groups = []
+    for dept_name, dept_df in line_items.groupby("Department Name", sort=False):
+        groups.append({
+            "department": dept_name,
+            "items": dept_df.to_dict(orient="records"),
+            "subtotal": float_format(round(dept_df["Net Value"].sum(), 2)),
+        })
+    html_str = RECAP_TEMPLATE.render(groups=groups, **header)
+    HTML(string=html_str).write_pdf(out_path)
 
 
 # helper functions
@@ -338,12 +363,17 @@ for agyc in agycodes:
             idofaccount = SF_ACCT_INFO_DICT[agycode]
 
             # generating ContentVersion manifest
+            '''
             content_version.loc[loop_count] = [titledate,
                                                 desc,
                                                 OUTPUTPATH + filename,
                                                 OUTPUTPATH + filename,
                                                 idofaccount]
-
+            '''
+            content_version.loc[loop_count] = [titledate, desc,
+                                    OUTPUTPATH + pdf_name,
+                                    OUTPUTPATH + pdf_name,
+                                    idofaccount]
             # drop identifier columns
             sub3df.drop(['AgyCode', 'MaterialTranslate'], axis=1,
                         inplace=True)
@@ -351,6 +381,21 @@ for agyc in agycodes:
             with pd.ExcelWriter(OUTPUTPATH+filename) as writer: # pylint: disable=abstract-class-instantiated
                 sub3df.to_excel(writer, index=False)
             print('Creating ' + filename)
+            
+            head = sub3df.iloc[0]
+            header = {
+                "customer_name": customername,
+                "customer": head["Customer"],
+                "contract_desc": head["Contract Desc."],
+                "sales_doc": sales_doc_no,
+                "invoice_no": head["Invoice"],
+                "invoiced_on": pdate,
+                "generated_on": gendate,
+                "total": invoiceamt,
+            }
+            pdf_name = filename.replace(".xlsx", ".pdf")
+            make_recap_pdf(sub3df, header, OUTPUTPATH + pdf_name)
+            print("Creating " + pdf_name)
 
             loop_count += 1
 

@@ -57,7 +57,8 @@ B_AGYS = {'E240B': 'EMERGENCY',
 # helper functions
 def create_acct_code(data: str) -> str:
     """does easy and complicated mapping for SF acct codes"""
-    contract_desc = data['Document Desc.']
+    # contract_desc = data['Document Desc.'] -- changed 6/2026
+    contract_desc = data['Contract Desc.']
     customer_number = data['Customer']
     customer_number_first_four = customer_number[:4]
     customer_number_last_four = customer_number[-4:]
@@ -181,7 +182,7 @@ def material_translate_create(sd=SD_MAP_DF) -> dict:
 
 def material_trans_df(dfx) -> str:
     """supplement apply function to translate materials"""
-    material = dfx['Material Desc.']
+    material = dfx['Mat. Description']
     try:
         return MAT_TRANS_DICT.get(material)
     except Exception:
@@ -218,22 +219,24 @@ invoice_date_file = xdf.iloc[0, 4]
 # convert customer number to str
 xdf['Customer'] = xdf['Customer'].apply(lambda x: str(x))
 # labeling OTCs
-xdf.loc[(xdf['Document Desc.'].isnull()),
-        'Document Desc.'] = 'One Time Charge'
+xdf.loc[(xdf['Contract Desc.'].isnull()),
+        'Contract Desc.'] = 'One Time Charge'
 # because there are / in this field
-xdf['Document Desc.'] = xdf['Document Desc.']\
+xdf['Contract Desc.'] = xdf['Contract Desc.']\
                         .apply(lambda x: x.replace('/', '-'))
+'''
 # remove unnecessary columns
 xdf.drop(['Exception', 'Plant', 'Commitment Item', 'Fund',
             'FI Function Area', 'Grant', 'Cost_center', 'G/L Account'],
             axis=1, inplace=True)
+'''
 agy = xdf.copy()
-
 # fill in a date for nonbillable, picks up date from first instance
 # agy.loc[(agy['Invoice Date'].isnull()),
 #        'Invoice Date'] = agy.iloc[0,4]
-agy.loc[(agy['Invoice Date'].isnull()),
-        'Invoice Date'] = invoice_date_file
+# Invoice Date became Invoiced on 6/2026
+agy.loc[(agy['Invoiced On'].isnull()),
+        'Invoiced On'] = invoice_date_file
 # create agycode if state agy number
 agy['AgyCode'] = agy.apply(create_acct_code, axis=1)
 agy.drop(agy[agy['AgyCode'] == 'zzz'].index, inplace=True)
@@ -244,7 +247,7 @@ agycodes = agy['AgyCode'].drop_duplicates().tolist()
 
 for key, value in B_AGYS.items():
     # mark B agencies
-    agy['AgyCode'].loc[agy['Document Desc.'].str.contains(value)] = key
+    agy['AgyCode'].loc[agy['Contract Desc.'].str.contains(value)] = key
     # to prevent sending empty dataframes for B agencies
     if not agy[agy['AgyCode'] == key].empty:
         agycodes.append(key)
@@ -255,10 +258,10 @@ for agyc in agycodes:
     # create subset of original data
     subdf = agy[agy['AgyCode'] == agyc].copy()
     # get all contract numbers in agy
-    sales_document_no_list = subdf['Sales Document #'].drop_duplicates()\
+    sales_document_no_list = subdf['Sales Contract#'].drop_duplicates()\
                                                         .tolist()
     # determine total number of invoice dates in agy
-    invoice_dates_list = subdf['Invoice Date'].drop_duplicates().tolist()
+    invoice_dates_list = subdf['Invoiced On'].drop_duplicates().tolist()
 
     # make shared services list/dict
     # subset frame to remove null/none values; then designate col tolist()
@@ -275,12 +278,12 @@ for agyc in agycodes:
     if isinstance(invoice_dates_list, float):
         print('No Invoice Date')
     for inv in invoice_dates_list:
-        sub2df = subdf[subdf['Invoice Date'] == inv].copy()
+        sub2df = subdf[subdf['Invoiced On'] == inv].copy()
         if sub2df.empty:
             continue
 
         for sales in sales_document_no_list:
-            sub3df = sub2df[sub2df['Sales Document #'] == sales].copy()
+            sub3df = sub2df[sub2df['Sales Contract#'] == sales].copy()
             if sub3df.empty:
                 continue
             # file variables
@@ -295,15 +298,25 @@ for agyc in agycodes:
 
             # pick first not null customer name
             # sales_contract_desc = sub2df.iloc[0,1]
-            sales_contract_desc_list = sub3df['Document Desc.']\
+
+            # there's so much missing data now multiple columns  6/2026
+            # reinstating line 300, have to replace /'s b/c line breaks
+            customername = sub2df.iloc[0,1]
+            customername = customername.replace("/", "")
+            '''
+            sales_contract_desc_list = sub3df['Contract Desc.']\
                 .drop_duplicates()\
                 .tolist()
 
             if sub3df.iloc[0, 3] == 'One Time Charge':
-                customername = sales_contract_desc_list[1]
+                # data fix 6/2026
+                try:
+                    customername = sales_contract_desc_list[1]
+                except:
+                    customername = sales_contract_desc_list[0]
             else:
                 customername = sales_contract_desc_list[0]
-
+            '''
             # file identifiers
             invoiceamt = float_format(round(sub3df['Net Value'].sum(), 2))
             tdate = '20'+pdate[-2:]\
@@ -317,7 +330,7 @@ for agyc in agycodes:
                 + ' - Shared Services.xlsx'
             titledate = filename[:-5]
             printfilename = agycode\
-                + ' Invoice Date '\
+                + ' Invoiced On '\
                 + pdate + ' '\
                 + customername
 

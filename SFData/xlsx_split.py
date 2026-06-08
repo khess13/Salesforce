@@ -354,6 +354,7 @@ for agyc in agycodes:
                 + ' - Sales Doc ' + sales_doc_no\
                 + ' - Shared Services.xlsx'
             titledate = filename[:-5]
+            pdf_name = filename.replace(".xlsx", ".pdf")
             printfilename = agycode\
                 + ' Invoiced On '\
                 + pdate + ' '\
@@ -393,7 +394,6 @@ for agyc in agycodes:
                 "generated_on": gendate,
                 "total": invoiceamt,
             }
-            pdf_name = filename.replace(".xlsx", ".pdf")
             make_recap_pdf(sub3df, header, OUTPUTPATH + pdf_name)
             print("Creating " + pdf_name)
 

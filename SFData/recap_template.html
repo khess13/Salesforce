@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Services Billing Recap</title>
+<style>
+  @page {
+    size: Letter;
+    margin: 0.9in 0.85in;
+    @bottom-right { content: "Page " counter(page) " of " counter(pages); font-size: 8pt; color: #888; }
+  }
+  :root {
+    --ink: #1c2330; --muted: #5b6472; --rule: #d4d9e0;
+    --accent: #1f4e5f; --band: #f2f4f7; --dept: #e8edf0;
+  }
+  * { box-sizing: border-box; }
+  body { font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; color: var(--ink); font-size: 10.5pt; line-height: 1.45; margin: 0; }
+  .masthead { border-bottom: 2px solid var(--accent); padding-bottom: 12px; margin-bottom: 18px; }
+  .org { font-size: 8.5pt; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin: 0 0 2px 0; }
+  .doc-title { font-size: 18pt; font-weight: 700; margin: 0; color: var(--accent); }
+  .meta { width: 100%; border-collapse: collapse; margin-bottom: 22px; }
+  .meta td { vertical-align: top; padding: 0; }
+  .meta .right { text-align: right; }
+  .label { font-size: 8pt; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); margin-bottom: 1px; }
+  .value { font-size: 11pt; font-weight: 600; }
+  .meta .stack { margin-bottom: 10px; }
+  table.lines { width: 100%; border-collapse: collapse; }
+  table.lines thead th {
+    background: var(--band); text-align: left; font-size: 8.5pt; letter-spacing: 0.04em;
+    text-transform: uppercase; color: var(--muted); padding: 7px 9px; border-bottom: 1px solid var(--rule);
+  }
+  table.lines td { padding: 7px 9px; border-bottom: 1px solid var(--rule); vertical-align: top; }
+  .num { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  tr.dept-head td {
+    background: var(--dept); font-weight: 700; font-size: 9pt; letter-spacing: 0.04em;
+    text-transform: uppercase; color: var(--accent); padding-top: 9px; padding-bottom: 9px; border-bottom: 1px solid var(--rule);
+  }
+  .svc { display: block; font-weight: 600; }
+  .svcid { display: block; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 8pt; color: var(--muted); letter-spacing: 0.02em; margin-top: 1px; }
+  tr.dept-sub td { border-bottom: 1px solid var(--rule); font-weight: 600; font-size: 9.5pt; padding-top: 8px; padding-bottom: 8px; }
+  tr.dept-sub .lbl { text-align: right; color: var(--muted); }
+  .total-row td { border-top: 2px solid var(--accent); border-bottom: none; font-weight: 700; font-size: 11.5pt; padding-top: 11px; }
+  .total-row .lbl { text-align: right; color: var(--muted); font-weight: 600; }
+  .footnote { margin-top: 26px; font-size: 8.5pt; color: var(--muted); border-top: 1px solid var(--rule); padding-top: 8px; }
+</style>
+</head>
+<body>
+  <header class="masthead">
+    <p class="org">South Carolina &middot; Shared &amp; Distributed Services Billing</p>
+    <h1 class="doc-title">Services Billing Recap</h1>
+  </header>
+
+  <table class="meta">
+    <tr>
+      <td>
+        <div class="stack"><div class="label">Account</div><div class="value">{{ customer_name }}</div></div>
+        <div class="stack"><div class="label">Customer #</div><div class="value">{{ customer }}</div></div>
+        <div class="stack"><div class="label">Contract</div><div class="value">{{ contract_desc }}</div></div>
+      </td>
+      <td class="right">
+        <div class="stack"><div class="label">Sales Contract #</div><div class="value">{{ sales_doc }}</div></div>
+        <div class="stack"><div class="label">Invoice</div><div class="value">{{ invoice_no }}</div></div>
+        <div class="stack"><div class="label">Invoiced On</div><div class="value">{{ invoiced_on }}</div></div>
+        <div class="stack"><div class="label">Generated On</div><div class="value">{{ generated_on }}</div></div>
+      </td>
+    </tr>
+  </table>
+
+  <table class="lines">
+    <thead>
+      <tr>
+        <th>Service</th>
+        <th class="num" style="width:14%">Qty</th>
+        <th class="num" style="width:16%">Net Value</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for g in groups %}
+      <tr class="dept-head"><td colspan="3">{{ g["department"] }}</td></tr>
+      {% for r in g["items"] %}
+      <tr>
+        <td><span class="svc">{{ r["Mat. Description"] }}</span><span class="svcid">{{ r["Service ID"] }}</span></td>
+        <td class="num">{{ r["Quantity"] }} {{ r["UoM"] }}</td>
+        <td class="num">${{ "%.2f"|format(r["Net Value"]) }}</td>
+      </tr>
+      {% endfor %}
+      <tr class="dept-sub"><td colspan="2" class="lbl">{{ g["department"] }} subtotal</td><td class="num">{{ g["subtotal"] }}</td></tr>
+      {% endfor %}
+      <tr class="total-row"><td colspan="2" class="lbl">Total</td><td class="num">{{ total }}</td></tr>
+    </tbody>
+  </table>
+
+  <p class="footnote">
+    This recap summarizes shared services billed for the period shown above.
+    Generated automatically from SAP billing data.
+  </p>
+</body>
+</html>

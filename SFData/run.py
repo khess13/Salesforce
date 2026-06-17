@@ -10,7 +10,8 @@ RUN_HEADCOUNT = input('Run Headcount? y/n')
 
 if RUN_HEADCOUNT != 'y':
     subprocess.run(['python','xlsx_split.py'], check=False)
-    subprocess.run(['python','pdf_split.py'], check=False)
+    # deprecated 6-2026
+    # subprocess.run(['python','pdf_split.py'], check=False)
     subprocess.run(['python','services.py'], check=False)
     subprocess.run(['python','emailer.py'], check=False)
 else:

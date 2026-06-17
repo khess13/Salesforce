@@ -1,0 +1,87 @@
+@isTest
+// learning exercise that works - lots of extra comments
+public class armNotesByAccountTest {
+    @isTest static void TestFetch(){
+        
+        //add later - steps to insert accoounts and notes for the test
+        //1 - 1 account with 2 notes
+        Account acct = New Account(Name='Test Account', Agency_Acronym__c = 'XYZ');
+        insert acct;
+            Account_Note__c ARMNote = new Account_Note__c (Account__c = acct.id,
+                                                          Name = acct.Name + ' 1st ARM Note',
+                                                          Status__c = 'Current',
+                                                          Note_Text__c = 'This is the 1st ARM note text',
+                                                          Sort_Order__c = 'a'
+                                                          );
+            insert ARMNote;
+            ARMNote = new Account_Note__c (Account__c = acct.id,
+                                                          Name = acct.Name + ' 2nd ARM Note',
+                                                          Status__c = 'Current',
+                                                          Note_Text__c = 'This is the 2nd ARM note text ',
+                                                          Sort_Order__c = 'b'
+                                                          );
+            insert ARMNote;
+        //2
+        acct = New Account(Name='Test Account 2', Agency_Acronym__c = 'UVW');
+        insert acct;
+            ARMNote = new Account_Note__c (Account__c = acct.id,
+                                                          Name = acct.Name + ' ARM Note',
+                                                          Status__c = 'Current',
+                                                          Note_Text__c = 'This is the ARM note text 2',
+                                                          Sort_Order__c = 'b'
+                                                          );
+            insert ARMNote;
+        //3
+        acct = New Account(Name='Test Account 3', Agency_Acronym__c = 'RST');
+        insert acct;
+            ARMNote = new Account_Note__c (Account__c = acct.id,
+                                                          Name = acct.Name + ' ARM Note',
+                                                          Status__c = 'Current',
+                                                          Note_Text__c = 'This is the ARM note text for ' + acct.Name,
+                                                          Sort_Order__c = 'a'
+                                                          );
+            insert ARMNote;
+        //failed attempts at getting the notes object :
+        //map<string, list<sObject>> x = armNotesByAccount.getArmNotesByAccount(); //Illegal assignment from Map<String,armNotesByAccount.armNoteListWrapper> to Map<String,List<SObject>>
+        //map<string, list<sObject>> x = new armNotesByAccount(); 		//Illegal assignment from armNotesByAccount to Map<String,List<SObject>>
+                
+        //Map<string, list<ArmNotesByAccount.armNoteListWrapper>> x; 	// no error by itself
+        //x = new armNotesByAccount.getArmNotesByAccount(); 	//Invalid type: armNotesByAccount.getArmNotesByAccount
+        
+        //Map<string, list<ArmNotesByAccount.armNoteListWrapper>> x = new ARMNotesByAccount.getArmNotesByAccount(); 	//Invalid type: ARMNotesByAccount.getArmNotesByAccount
+        //Map<string, list<sObject>> x = new ARMNotesByAccount.getArmNotesByAccount();
+        //list<sObject> x = new ARMNotesByAccount().armNoteListWrapper();
+        //Map<string, list<sObject>> x = new ARMNotesByAccount().getArmNotesByAccount(); 	//Static method cannot be referenced from a non static context: Map<String,armNotesByAccount.armNoteListWrapper> armNotesByAccount.getArmNotesByAccount()
+         
+        //map<string, list<Account_Note__c>> mapVar = new map<string, list<Account_Note__c>>(); //invalid type
+        //map<string, list<sObject>> mapVar = new map<string, list<sObject>>();  //invalid type
+        //Map<string, ArmNotesByAccount.armNoteListWrapper> mapVar = new map<string,ArmNotesByAccount.armNoteListWrapper>();
+        //mapVar = new arm.getArmNotesByAccount();
+
+		// instantiate the controller object
+        armNotesByAccount arm = new armNotesByAccount(); 
+		// declare a map variable using the specific type from the controller class
+        map<string, armNotesByAccount.armNoteListWrapper> mapVar = new map<string, armNotesByAccount.armNoteListWrapper>();  
+        // assign the object
+		mapVar = arm.getArmNotesByAccount();
+		
+        // same query as is in the class being tested - returns proper value of 3
+      	List<Account_Note__c> lAcctNote = [
+          	SELECT Account__r.agency_acronym__c, Name, Note_text__c, status__c, sort_order__c
+          	FROM Account_Note__c
+          	WHERE status__c = 'Current'
+          	ORDER BY Account__r.agency_acronym__c desc, sort_order__c];
+        system.debug('armNotesByAccountTest : query of Account note count :' + lAcctNote.size());
+        system.debug('armNotesByAccountTest : query of Account 1st note Name :' + lAcctNote[1].Name);
+        system.debug('armNotesByAccountTest : query of Account 1st acronym :' + lAcctNote[1].Account__r.Agency_Acronym__c);
+        
+        
+        
+        // the test - without any test data this should at least indicate no error (null value) was returned
+		system.debug('armNotesByAccountTest : armNote.Name :' + armNote.Name );
+        system.debug('armNotesByAccountTest : armNote.Status :' + armNote.Status__c );
+        system.debug('armNotesByAccountTest : armNote.AgencyAcronym :' + armNote.Account__r.agency_acronym__c );
+        system.debug('armNotesByAccountTest : mapVar size :' + mapVar.size() ); // shows number of account records
+        System.assert(mapVar.size() == 3 ); 
+    }
+}

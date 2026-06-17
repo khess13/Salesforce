@@ -1,0 +1,53 @@
+public class armNotesByAccount { 
+    
+    public Map<String,armNoteListWrapper> getArmNotesByAccount(){
+      List<Account_Note__c> result = [
+          	SELECT Account__r.agency_acronym__c, Name, Note_text__c, status__c, sort_order__c
+          	FROM Account_Note__c
+          	WHERE status__c = 'Current'
+          	ORDER BY Account__r.agency_acronym__c desc, sort_order__c];
+    
+      // testing
+      System.debug('armNotesByAccount : result value :'+ result);
+
+      // Group ARM Notes by Account
+      Map<String,armNoteListWrapper> armNotesByAccount = new Map<String,armNoteListWrapper>();
+      
+      for(Account_Note__c note: result){
+            //KH testing
+            System.debug('armNotesByAccount :note value :' + note.Name);
+            System.debug('armNotesByAccount :Agency Acronym ' + note.Account__r.agency_acronym__c);
+          
+        if(null == Note.Account__r.agency_acronym__c) continue;
+        armNoteListWrapper acct = armNotesByAccount.get(note.Account__r.agency_acronym__c);
+        if(null == acct){
+            armNotesByAccount.put(note.Account__r.agency_acronym__c, new armNoteListWrapper(new List<Account_Note__c>()) );
+        }
+        armNotesByAccount.get(note.Account__r.agency_acronym__c).armNoteList.add(note);
+
+      }
+      // testing
+      	System.debug('armNotesByAccount : return :' + armNotesByAccount); //returns nothing, yet class works
+        System.debug('armNotesByAccount : size :' + armNotesByAccount.size() ); //equivalent, both return 0
+      return armNotesByAccount;
+    }
+   // List of armNotes and details
+   public class armNoteListWrapper {
+       public List<Account_Note__c> armNoteList {get; set;}
+       public Integer numOfNotes {
+          get{
+            return armNoteList.size();
+          }
+          set;
+       }
+       public Id firstOfList{
+          get{
+            return armNoteList[0].Id;
+          }
+          set;
+       }
+       public armNoteListWrapper(List<account_note__c> listArmNotes){
+           armNoteList = listArmNotes;
+       }
+   }
+}

@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>Services Billing Recap</title>
+<title>Services Billing</title>
 <style>
   @page {
     size: Letter;
@@ -35,6 +35,7 @@
     background: var(--dept); font-weight: 700; font-size: 9pt; letter-spacing: 0.04em;
     text-transform: uppercase; color: var(--accent); padding-top: 9px; padding-bottom: 9px; border-bottom: 1px solid var(--rule);
   }
+  table.lines thead th.num { text-align: right; }
   .svc { display: block; font-weight: 600; }
   .svcid { display: block; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 8pt; color: var(--muted); letter-spacing: 0.02em; margin-top: 1px; }
   tr.dept-sub td { border-bottom: 1px solid var(--rule); font-weight: 600; font-size: 9.5pt; padding-top: 8px; padding-bottom: 8px; }
@@ -56,10 +57,10 @@
         <div class="stack"><div class="label">Account</div><div class="value">{{ customer_name }}</div></div>
         <div class="stack"><div class="label">Customer #</div><div class="value">{{ customer }}</div></div>
         <div class="stack"><div class="label">Contract</div><div class="value">{{ contract_desc }}</div></div>
+        <div class="stack"><div class="label">Sales Contract #</div><div class="value">{{ sales_doc }}</div></div>
       </td>
       <td class="right">
-        <div class="stack"><div class="label">Sales Contract #</div><div class="value">{{ sales_doc }}</div></div>
-        <div class="stack"><div class="label">Invoice</div><div class="value">{{ invoice_no }}</div></div>
+        <div class="stack"><div class="label">Invoice</div><div class="value">{{ "%.0f"|format(r["invoice_no"]) }}</div></div>
         <div class="stack"><div class="label">Invoiced On</div><div class="value">{{ invoiced_on }}</div></div>
         <div class="stack"><div class="label">Generated On</div><div class="value">{{ generated_on }}</div></div>
       </td>
@@ -81,7 +82,7 @@
       <tr>
         <td><span class="svc">{{ r["Mat. Description"] }}</span><span class="svcid">{{ r["Service ID"] }}</span></td>
         <td class="num">{{ r["Quantity"] }} {{ r["UoM"] }}</td>
-        <td class="num">${{ "%.2f"|format(r["Net Value"]) }}</td>
+        <td class="num">${{ "{:,.2f}".format(r["Net Value"]) }}</td>
       </tr>
       {% endfor %}
       <tr class="dept-sub"><td colspan="2" class="lbl">{{ g["department"] }} subtotal</td><td class="num">{{ g["subtotal"] }}</td></tr>

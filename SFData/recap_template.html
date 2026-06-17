@@ -4,51 +4,76 @@
 <meta charset="utf-8">
 <title>Services Billing</title>
 <style>
+  @import url('https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,400;0,600;0,700;1,400&display=swap');
+
   @page {
     size: Letter;
     margin: 0.9in 0.85in;
     @bottom-right { content: "Page " counter(page) " of " counter(pages); font-size: 8pt; color: #888; }
   }
+  /* Admin brand palette */
   :root {
-    --ink: #1c2330; --muted: #5b6472; --rule: #d4d9e0;
-    --accent: #1f4e5f; --band: #f2f4f7; --dept: #e8edf0;
+    --navy: #003C71;   /* Admin Navy  - primary dark */
+    --blue: #0072CE;   /* Admin Blue  - primary accent */
+    --teal: #00A9CE;   /* secondary */
+    --gray: #D9E1E2;   /* secondary */
+    --ink: #1c2330; --muted: #5b6472;
+    --rule: #c9d2d8; --band: #eef2f5; --dept: #dce6ee;
   }
   * { box-sizing: border-box; }
-  body { font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; color: var(--ink); font-size: 10.5pt; line-height: 1.45; margin: 0; }
-  .masthead { border-bottom: 2px solid var(--accent); padding-bottom: 12px; margin-bottom: 18px; }
-  .org { font-size: 8.5pt; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin: 0 0 2px 0; }
-  .doc-title { font-size: 18pt; font-weight: 700; margin: 0; color: var(--accent); }
+  body { font-family: "Open Sans", Aptos, Arial, sans-serif; color: var(--ink); font-size: 10.5pt; line-height: 1.45; margin: 0; }
+
+  .masthead { border-bottom: 2px solid var(--navy); padding-bottom: 12px; margin-bottom: 18px; }
+  .head-row { width: 100%; border-collapse: collapse; }
+  .head-row td { vertical-align: middle; padding: 0; }
+  .head-right { text-align: right; }
+  .logo { height: 52px; }
+  .org { font-size: 8.5pt; letter-spacing: 0.08em; text-transform: uppercase; color: var(--blue); margin: 0 0 2px 0; }
+  .doc-title { font-size: 18pt; font-weight: 700; margin: 0; color: var(--navy); }
+
   .meta { width: 100%; border-collapse: collapse; margin-bottom: 22px; }
   .meta td { vertical-align: top; padding: 0; }
   .meta .right { text-align: right; }
   .label { font-size: 8pt; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); margin-bottom: 1px; }
   .value { font-size: 11pt; font-weight: 600; }
   .meta .stack { margin-bottom: 10px; }
+
   table.lines { width: 100%; border-collapse: collapse; }
   table.lines thead th {
     background: var(--band); text-align: left; font-size: 8.5pt; letter-spacing: 0.04em;
     text-transform: uppercase; color: var(--muted); padding: 7px 9px; border-bottom: 1px solid var(--rule);
   }
+  table.lines thead th.num { text-align: right; }
   table.lines td { padding: 7px 9px; border-bottom: 1px solid var(--rule); vertical-align: top; }
   .num { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+
   tr.dept-head td {
     background: var(--dept); font-weight: 700; font-size: 9pt; letter-spacing: 0.04em;
-    text-transform: uppercase; color: var(--accent); padding-top: 9px; padding-bottom: 9px; border-bottom: 1px solid var(--rule);
+    text-transform: uppercase; color: var(--navy); padding-top: 9px; padding-bottom: 9px; border-bottom: 1px solid var(--rule);
   }
-  table.lines thead th.num { text-align: right; }
   .svc { display: block; font-weight: 600; }
   .svcid { display: block; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 9pt; color: var(--muted); letter-spacing: 0.02em; margin-top: 1px; }
   tr.dept-sub td { border-bottom: 1px solid var(--rule); font-weight: 600; font-size: 9.5pt; padding-top: 8px; padding-bottom: 8px; }
   tr.dept-sub .lbl { text-align: right; color: var(--muted); }
-  .total-row td { border-top: 2px solid var(--accent); border-bottom: none; font-weight: 700; font-size: 11.5pt; padding-top: 11px; }
+
+  .total-row td { border-top: 2px solid var(--navy); border-bottom: none; font-weight: 700; font-size: 11.5pt; padding-top: 11px; color: var(--navy); }
   .total-row .lbl { text-align: right; color: var(--muted); font-weight: 600; }
   .footnote { margin-top: 26px; font-size: 8.5pt; color: var(--muted); border-top: 1px solid var(--rule); padding-top: 8px; }
 </style>
 </head>
 <body>
   <header class="masthead">
-    <p class="org">South Carolina &middot; Shared &amp; Distributed Services Billing</p>
-    <h1 class="doc-title">Services Billing Recap</h1>
+    <table class="head-row">
+      <tr>
+        <td class="head-left">
+          <p class="org">Shared &amp; Distributed Services Billing</p>
+          <h1 class="doc-title">Services Billing</h1>
+        </td>
+        <td class="head-right">
+          <img class="logo" src="admin_logo.png" alt="South Carolina Department of Administration">
+        </td>
+      </tr>
+    </table>
   </header>
 
   <table class="meta">

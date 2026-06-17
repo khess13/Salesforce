@@ -1,4 +1,4 @@
-from __future__ import annotations
+from __future__ import annot
 """
 Splits xlsx into individual files for upload
 Creates ContentVersion for SF Dataloader
@@ -380,10 +380,11 @@ for agyc in agycodes:
             sub3df.drop(['AgyCode', 'MaterialTranslate'], axis=1,
                         inplace=True)
             # export file to excel file and save
+            '''
             with pd.ExcelWriter(OUTPUTPATH+filename) as writer: # pylint: disable=abstract-class-instantiated
                 sub3df.to_excel(writer, index=False)
             print('Creating ' + filename)
-            
+            '''
             head = sub3df.iloc[0]
             header = {
                 "customer_name": customername,

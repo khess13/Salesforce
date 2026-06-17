@@ -1,3 +1,4 @@
+from __future__ import
 """
 Splits xlsx into individual files for upload
 Creates ContentVersion for SF Dataloader
@@ -14,7 +15,6 @@ import pandas as pd
 from FileService import FileService
 from jinja2 import Template
 from weasyprint import HTML
-from __future__ import
 
 ROOT = os.getcwd()
 DATESTAMP = str(dt.datetime.now().strftime('%m-%d-%Y'))

@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>Services Billing</title>
+<title>Services Billing Recap</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,400;0,600;0,700;1,400&display=swap');
 
@@ -67,7 +67,7 @@
       <tr>
         <td class="head-left">
           <p class="org">Shared &amp; Distributed Services Billing</p>
-          <h1 class="doc-title">Services Billing</h1>
+          <h1 class="doc-title">Services Billing Recap</h1>
         </td>
         <td class="head-right">
           <img class="logo" src="admin_logo.png" alt="South Carolina Department of Administration">
@@ -81,8 +81,9 @@
       <td>
         <div class="stack"><div class="label">Account</div><div class="value">{{ customer_name }}</div></div>
         <div class="stack"><div class="label">Customer #</div><div class="value">{{ customer }}</div></div>
-        <div class="stack"><div class="label">Contract</div><div class="value">{{ contract_desc }}</div></div>
+        <!--<div class="stack"><div class="label">Contract</div><div class="value">{{ contract_desc }}</div></div>
         <div class="stack"><div class="label">Sales Contract #</div><div class="value">{{ sales_doc }}</div></div>
+      -->
       </td>
       <td class="right">
         <div class="stack"><div class="label">Invoice</div><div class="value">{{ "%.0f"|format(invoice_no) }}</div></div>
@@ -118,7 +119,7 @@
 
   <p class="footnote">
     This recap summarizes shared services billed for the period shown above.
-    Generated from SAP billing data.
+    Generated automatically from SAP billing data.
   </p>
 </body>
 </html>

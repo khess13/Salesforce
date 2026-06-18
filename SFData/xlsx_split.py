@@ -65,7 +65,8 @@ with open(_TEMPLATE_PATH, encoding="utf-8") as _f:
 def make_recap_pdf(line_items, header, out_path):
     """Group one account's lines by department and write a PDF."""
     line_items = line_items.copy()
-    fallback = "Account-wide"          # or: header["customer_name"]
+    #fallback = "Account-wide"
+    fallback = header["customer_name"]
     line_items["Department Name"] = line_items["Department Name"].apply(
         lambda v: fallback if (pd.isna(v) or str(v).strip() == "") else v
     )
@@ -284,8 +285,10 @@ for agyc in agycodes:
     # create subset of original data
     subdf = agy[agy['AgyCode'] == agyc].copy()
     # get all contract numbers in agy
-    sales_document_no_list = subdf['Sales Contract#'].drop_duplicates()\
-                                                        .tolist()
+    #sales_document_no_list = subdf['Sales Contract#'].drop_duplicates()\
+    #                                                    .tolist()
+    # get all invoice numbers in agy
+    invoice_no_list = subdf['Invoice'].drop_duplicates().tolist()
     # determine total number of invoice dates in agy
     invoice_dates_list = subdf['Invoiced On'].drop_duplicates().tolist()
 
@@ -308,8 +311,9 @@ for agyc in agycodes:
         if sub2df.empty:
             continue
 
-        for sales in sales_document_no_list:
-            sub3df = sub2df[sub2df['Sales Contract#'] == sales].copy()
+        #TODO change to invoice
+        for invoice in invoice_no_list:
+            sub3df = sub2df[sub2df['Invoice'] == invoice].copy()
             if sub3df.empty:
                 continue
             # file variables
@@ -320,7 +324,8 @@ for agyc in agycodes:
                     + pdate\
                     + '. Generated on '\
                     + gendate
-            sales_doc_no = str(int(sales))
+            #sales_doc_no = str(int(sales))
+            invoice_doc_no = str(int(invoice))
 
             # pick first not null customer name
             # sales_contract_desc = sub2df.iloc[0,1]
@@ -352,7 +357,7 @@ for agyc in agycodes:
             filename = tdate + ' - '\
                 + invoiceamt + ' - '\
                 + customername\
-                + ' - Sales Doc ' + sales_doc_no\
+                + ' - Invoice No ' + invoice_doc_no\
                 + ' - Shared Services.xlsx'
             titledate = filename[:-5]
             pdf_name = filename.replace(".xlsx", ".pdf")
@@ -390,7 +395,7 @@ for agyc in agycodes:
                 "customer_name": customername,
                 "customer": head["Customer"],
                 "contract_desc": head["Contract Desc."],
-                "sales_doc": sales_doc_no,
+                #"sales_doc": sales_doc_no,
                 "invoice_no": head["Invoice"],
                 "invoiced_on": pdate,
                 "generated_on": gendate,

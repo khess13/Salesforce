@@ -48,7 +48,7 @@
 <body>
   <header class="masthead">
     <p class="org">Division of Technology &middot; Shared Services Billing</p>
-    <h1 class="doc-title">Services Billing</h1>
+    <h1 class="doc-title">Services Billing</h1>[ ]
   </header>
 
   <table class="meta">
@@ -73,7 +73,7 @@
       <tr>
         <th>Service</th>
         <th class="num" style="width:14%">Qty</th>
-        <th class="num" style="width:16%">Net Value</th>
+        <th class="num" style="width:16%">Amount</th>
       </tr>
     </thead>
     <tbody>
@@ -83,7 +83,7 @@
       <tr>
         <td><span class="svc">{{ r["Mat. Description"] }}</span><span class="svcid">{{ r["Service ID"] }}</span></td>
         <td class="num">{{ r["Quantity"] }} {{ r["UoM"] }}</td>
-        <td class="num">${{ "{:,.2f}".format(r["Net Value"]) }}</td>
+        <td class="num">${{ "{:,.2f}".format(r["Item Breaskup"]) }}</td>
       </tr>
       {% endfor %}
       <tr class="dept-sub"><td colspan="2" class="lbl">{{ g["department"] }} subtotal</td><td class="num">{{ g["subtotal"] }}</td></tr>

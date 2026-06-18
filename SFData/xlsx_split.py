@@ -67,15 +67,22 @@ def make_recap_pdf(line_items, header, out_path):
     line_items = line_items.copy()
     #fallback = "Account-wide"
     fallback = header["customer_name"]
+    fallback_for_UoM = "EA"
     line_items["Department Name"] = line_items["Department Name"].apply(
         lambda v: fallback if (pd.isna(v) or str(v).strip() == "") else v
+    )
+    line_items["Service ID"] = line_items["Service ID"].apply(
+        lambda v: fallback if (pd.isna(v) or str(v).strip() == "") else v
+    )
+    line_items["UoM"] = line_items["UoM"].apply(
+        lambda v: fallback_for_UoM if (pd.isna(v) or str(v).strip() == "") else v
     )
     groups = []
     for dept_name, dept_df in line_items.groupby("Department Name", sort=False):
         groups.append({
             "department": dept_name,
             "items": dept_df.to_dict(orient="records"),
-            "subtotal": float_format(round(dept_df["Net Value"].sum(), 2)),
+            "subtotal": float_format(round(dept_df["Item Breakup"].sum(), 2)),
         })
     html_str = RECAP_TEMPLATE.render(groups=groups, **header)
     HTML(string=html_str).write_pdf(out_path)
@@ -251,12 +258,7 @@ xdf.loc[(xdf['Contract Desc.'].isnull()),
 # because there are / in this field
 xdf['Contract Desc.'] = xdf['Contract Desc.']\
                         .apply(lambda x: x.replace('/', '-'))
-'''
-# remove unnecessary columns
-xdf.drop(['Exception', 'Plant', 'Commitment Item', 'Fund',
-            'FI Function Area', 'Grant', 'Cost_center', 'G/L Account'],
-            axis=1, inplace=True)
-'''
+
 agy = xdf.copy()
 # fill in a date for nonbillable, picks up date from first instance
 # agy.loc[(agy['Invoice Date'].isnull()),
@@ -285,9 +287,6 @@ for agyc in agycodes:
     # create subset of original data
     subdf = agy[agy['AgyCode'] == agyc].copy()
     # get all contract numbers in agy
-    #sales_document_no_list = subdf['Sales Contract#'].drop_duplicates()\
-    #                                                    .tolist()
-    # get all invoice numbers in agy
     invoice_no_list = subdf['Invoice'].drop_duplicates().tolist()
     # determine total number of invoice dates in agy
     invoice_dates_list = subdf['Invoiced On'].drop_duplicates().tolist()
@@ -311,7 +310,6 @@ for agyc in agycodes:
         if sub2df.empty:
             continue
 
-        #TODO change to invoice
         for invoice in invoice_no_list:
             sub3df = sub2df[sub2df['Invoice'] == invoice].copy()
             if sub3df.empty:
@@ -334,22 +332,9 @@ for agyc in agycodes:
             # reinstating line 300, have to replace /'s b/c line breaks
             customername = sub2df.iloc[0,1]
             customername = customername.replace("/", "")
-            '''
-            sales_contract_desc_list = sub3df['Contract Desc.']\
-                .drop_duplicates()\
-                .tolist()
-
-            if sub3df.iloc[0, 3] == 'One Time Charge':
-                # data fix 6/2026
-                try:
-                    customername = sales_contract_desc_list[1]
-                except:
-                    customername = sales_contract_desc_list[0]
-            else:
-                customername = sales_contract_desc_list[0]
-            '''
+            
             # file identifiers
-            invoiceamt = float_format(round(sub3df['Net Value'].sum(), 2))
+            invoiceamt = float_format(round(sub3df['Item Breakup'].sum(), 2))
             tdate = '20'+pdate[-2:]\
                     + '-' + pdate[:2]\
                     + '-' + pdate[3:5]
@@ -370,13 +355,6 @@ for agyc in agycodes:
             idofaccount = SF_ACCT_INFO_DICT[agycode]
 
             # generating ContentVersion manifest
-            '''
-            content_version.loc[loop_count] = [titledate,
-                                                desc,
-                                                OUTPUTPATH + filename,
-                                                OUTPUTPATH + filename,
-                                                idofaccount]
-            '''
             content_version.loc[loop_count] = [titledate, desc,
                                     OUTPUTPATH + pdf_name,
                                     OUTPUTPATH + pdf_name,

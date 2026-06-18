@@ -312,6 +312,8 @@ for agyc in agycodes:
 
         for invoice in invoice_no_list:
             sub3df = sub2df[sub2df['Invoice'] == invoice].copy()
+            # drop $0 service lines (imperfect data)
+            sub3df = sub3df[sub3df['Item Breakup'].fillna(0).round(2) != 0].copy()
             if sub3df.empty:
                 continue
             # file variables

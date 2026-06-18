@@ -77,6 +77,16 @@ def make_recap_pdf(line_items, header, out_path):
     line_items["UoM"] = line_items["UoM"].apply(
         lambda v: fallback_for_UoM if (pd.isna(v) or str(v).strip() == "") else v
     )
+
+    # roll up lines that share material AND service id (within a department);
+    # different service ids on the same material stay on separate lines
+    line_items = (line_items
+        .groupby(["Department Name", "Mat. Description", "Service ID"],
+                 sort=False, as_index=False)
+        .agg({"UoM": "first",
+              "Quantity": "sum",
+              "Item Breakup": "sum"}))
+
     groups = []
     for dept_name, dept_df in line_items.groupby("Department Name", sort=False):
         groups.append({

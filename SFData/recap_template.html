@@ -36,27 +36,29 @@
   .sum-breakdown td { padding: 2px 0; font-size: 9.5pt; border: none; }
   .sum-breakdown .sum-amt { text-align: right; color: var(--muted); font-variant-numeric: tabular-nums; }
 
-  table.lines { width: 100%; border-collapse: collapse; }
-  table.lines thead th {
+  /* one table per material group; thead repeats the group title on each page */
+  table.lines { width: 100%; border-collapse: collapse; table-layout: fixed; }
+  table.grp-table { margin-top: 14px; }
+  .c1 { width: 70%; } .c2 { width: 14%; } .c3 { width: 16%; }
+  table.lines thead th { padding: 7px 9px; border-bottom: 1px solid var(--rule); }
+  tr.dept-head th {
+    background: var(--dept); text-align: left; font-weight: 700; font-size: 10pt;
+    color: var(--accent); padding-top: 9px; padding-bottom: 9px;
+  }
+  tr.col-head th {
     background: var(--band); text-align: left; font-size: 8.5pt; letter-spacing: 0.04em;
-    text-transform: uppercase; color: var(--muted); padding: 7px 9px; border-bottom: 1px solid var(--rule);
+    text-transform: uppercase; color: var(--muted);
   }
-  table.lines thead th.num { text-align: right; }
+  tr.col-head th.num { text-align: right; }
   table.lines td { padding: 7px 9px; border-bottom: 1px solid var(--rule); vertical-align: top; }
-  /* keep each material group together so its header never strands at a page bottom */
-  tbody.grp { break-inside: avoid; page-break-inside: avoid; }
   .num { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
-
-  tr.dept-head td {
-    background: var(--dept); font-weight: 700; font-size: 10pt;
-    color: var(--accent); padding-top: 9px; padding-bottom: 9px; border-bottom: 1px solid var(--rule);
-  }
   tr.item.alt td { background: var(--zebra); }
   td.svc-cell { padding-left: 18px; }
   .svc { display: block; font-weight: 600; }
-  .svcid { display: block; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 9pt; color: var(--muted); letter-spacing: 0.02em; margin-top: 1px; }
+  .svcid { display: block; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 9pt; color: var(--muted); letter-spacing: 0.02em; margin-top: 1px; overflow-wrap: anywhere; }
   tr.mg-sub td { font-size: 9pt; color: var(--muted); padding: 3px 9px 9px 9px; border-bottom: 1px solid var(--rule); }
   tr.mg-sub .lbl { text-align: right; }
+  table.total-table { margin-top: 0; }
   .total-row td { border-top: 2px solid var(--accent); border-bottom: none; font-weight: 700; font-size: 11.5pt; padding-top: 11px; }
   .total-row .lbl { text-align: right; color: var(--muted); font-weight: 600; }
   .footnote { margin-top: 26px; font-size: 8.5pt; color: var(--muted); border-top: 1px solid var(--rule); padding-top: 8px; }
@@ -102,17 +104,14 @@
     </tr>
   </table>
 
-  <table class="lines">
+  {% for mg in groups %}
+  <table class="lines grp-table">
+    <colgroup><col class="c1"><col class="c2"><col class="c3"></colgroup>
     <thead>
-      <tr>
-        <th>Service</th>
-        <th class="num" style="width:14%">Qty</th>
-        <th class="num" style="width:16%">Amount</th>
-      </tr>
+      <tr class="dept-head"><th colspan="3">{{ mg["material_group"]|title }}</th></tr>
+      <tr class="col-head"><th>Service</th><th class="num">Qty</th><th class="num">Amount</th></tr>
     </thead>
-    {% for mg in groups %}
-    <tbody class="grp">
-      <tr class="dept-head"><td colspan="3">{{ mg["material_group"]|title }}</td></tr>
+    <tbody>
       {% for r in mg["items"] %}
       <tr class="item{% if loop.index is even %} alt{% endif %}">
         <td class="svc-cell"><span class="svc">{{ r["Mat. Description"]|title }}</span><span class="svcid">{{ r["Service ID"] }}</span></td>
@@ -122,7 +121,11 @@
       {% endfor %}
       <tr class="mg-sub"><td colspan="2" class="lbl">{{ mg["material_group"]|title }} subtotal</td><td class="num">{{ mg["subtotal"] }}</td></tr>
     </tbody>
-    {% endfor %}
+  </table>
+  {% endfor %}
+
+  <table class="lines total-table">
+    <colgroup><col class="c1"><col class="c2"><col class="c3"></colgroup>
     <tbody>
       <tr class="total-row"><td colspan="2" class="lbl">Total</td><td class="num">{{ total }}</td></tr>
     </tbody>

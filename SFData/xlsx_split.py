@@ -89,7 +89,7 @@ def make_recap_pdf(line_items, header, out_path):
 
     groups = []
     for dept_name, dept_df in line_items.groupby("Department Name", sort=False):
-        dept_df = dept_df.sort_values("Mat. Description",
+        dept_df = dept_df.sort_values(["Mat. Description","Service ID"],
                                       key=lambda c: c.str.lower())
         groups.append({
             "department": dept_name,

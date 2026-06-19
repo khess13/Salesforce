@@ -63,7 +63,7 @@ with open(_TEMPLATE_PATH, encoding="utf-8") as _f:
 
 
 def make_recap_pdf(line_items, header, out_path):
-    """Group one account's lines by department and write a PDF."""
+    """Group one account's lines by department and material group, write a PDF."""
     line_items = line_items.copy()
     #fallback = "Account-wide"
     fallback = header["customer_name"]
@@ -77,11 +77,14 @@ def make_recap_pdf(line_items, header, out_path):
     line_items["UoM"] = line_items["UoM"].apply(
         lambda v: fallback_for_UoM if (pd.isna(v) or str(v).strip() == "") else v
     )
+    line_items["Material Group"] = line_items["Material Group"].apply(
+        lambda v: "Other" if (pd.isna(v) or str(v).strip() == "") else v
+    )
 
     # roll up lines that share material AND service id (within a department);
     # different service ids on the same material stay on separate lines
     line_items = (line_items
-        .groupby(["Department Name", "Mat. Description", "Material Group", "Service ID"],
+        .groupby(["Department Name", "Material Group", "Mat. Description", "Service ID"],
                  sort=False, as_index=False)
         .agg({"UoM": "first",
               "Quantity": "sum",
@@ -89,11 +92,18 @@ def make_recap_pdf(line_items, header, out_path):
 
     groups = []
     for dept_name, dept_df in line_items.groupby("Department Name", sort=False):
-        dept_df = dept_df.sort_values(["Mat. Description","Service ID"],
+        mat_groups = []
+        for mg_name, mg_df in dept_df.groupby("Material Group", sort=False):
+            mg_df = mg_df.sort_values(["Mat. Description", "Service ID"],
                                       key=lambda c: c.str.lower())
+            mat_groups.append({
+                "material_group": mg_name,
+                "items": mg_df.to_dict(orient="records"),
+                "subtotal": float_format(round(mg_df["Item Breakup"].sum(), 2)),
+            })
         groups.append({
             "department": dept_name,
-            "items": dept_df.to_dict(orient="records"),
+            "material_groups": mat_groups,
             "subtotal": float_format(round(dept_df["Item Breakup"].sum(), 2)),
         })
     html_str = RECAP_TEMPLATE.render(groups=groups, **header)

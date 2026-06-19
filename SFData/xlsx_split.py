@@ -63,7 +63,7 @@ with open(_TEMPLATE_PATH, encoding="utf-8") as _f:
 
 
 def make_recap_pdf(line_items, header, out_path):
-    """Group one account's lines by department and material group, write a PDF."""
+    """Group one account's lines by material group and write a PDF."""
     line_items = line_items.copy()
     #fallback = "Account-wide"
     fallback = header["customer_name"]
@@ -90,22 +90,18 @@ def make_recap_pdf(line_items, header, out_path):
               "Quantity": "sum",
               "Item Breakup": "sum"}))
 
+    # group by material group across the whole invoice, sorted A-Z (case-insensitive)
     groups = []
-    for dept_name, dept_df in line_items.groupby("Department Name", sort=False):
-        mat_groups = []
-        for mg_name, mg_df in dept_df.groupby("Material Group", sort=False):
-            mg_df = mg_df.sort_values(["Mat. Description", "Service ID"],
-                                      key=lambda c: c.str.lower())
-            mat_groups.append({
-                "material_group": mg_name,
-                "items": mg_df.to_dict(orient="records"),
-                "subtotal": float_format(round(mg_df["Item Breakup"].sum(), 2)),
-            })
+    for mg_name, mg_df in line_items.groupby("Material Group", sort=False):
+        mg_df = mg_df.sort_values(["Mat. Description", "Service ID"],
+                                  key=lambda c: c.str.lower())
         groups.append({
-            "department": dept_name,
-            "material_groups": mat_groups,
-            "subtotal": float_format(round(dept_df["Item Breakup"].sum(), 2)),
+            "material_group": mg_name,
+            "items": mg_df.to_dict(orient="records"),
+            "subtotal": float_format(round(mg_df["Item Breakup"].sum(), 2)),
         })
+    groups.sort(key=lambda x: str(x["material_group"]).lower())
+
     html_str = RECAP_TEMPLATE.render(groups=groups, **header)
     HTML(string=html_str).write_pdf(out_path)
 

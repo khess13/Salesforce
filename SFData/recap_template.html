@@ -114,7 +114,7 @@
     <tbody>
       {% for r in mg["items"] %}
       <tr class="item{% if loop.index is even %} alt{% endif %}">
-        <td class="svc-cell"><span class="svc">{{ r["Mat. Description"]|title }}</span><span class="svcid">{{ r["Service ID"] }}</span></td>
+        <td class="svc-cell"><span class="svc">{{ r["Mat. Description"] }}</span><span class="svcid">{{ r["Service ID"] }}</span></td>
         <td class="num">{{ r["Quantity"] }} {{ r["UoM"] }}</td>
         <td class="num">${{ "{:,.2f}".format(r["Item Breakup"]) }}</td>
       </tr>

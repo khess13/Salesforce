@@ -81,7 +81,7 @@ def make_recap_pdf(line_items, header, out_path):
     # roll up lines that share material AND service id (within a department);
     # different service ids on the same material stay on separate lines
     line_items = (line_items
-        .groupby(["Department Name", "Mat. Description", "Service ID"],
+        .groupby(["Department Name", "Mat. Description", "Material Group", "Service ID"],
                  sort=False, as_index=False)
         .agg({"UoM": "first",
               "Quantity": "sum",
@@ -218,10 +218,11 @@ def material_translate_create(sd=SD_MAP_DF) -> dict:
     # unmatched entries check
     print(f'There are {unmatched} entries. Baseline is 36')
     #clear nans
-    SD_MAP_DF.dropna(subset=['MaterialTranslate'], inplace=True)
+    sd_map_trans = SD_MAP_DF.copy()
+    sd_map_trans.dropna(subset=['MaterialTranslate'], inplace=True)
     # so inefficient...
     print('Building material dictionary')
-    for ix, rw in SD_MAP_DF.iterrows():
+    for ix, rw in sd_map_trans.iterrows():
         material_trans_dict[rw['Material']] = rw['MaterialTranslate']
     return material_trans_dict
 
@@ -233,8 +234,18 @@ def material_trans_df(dfx) -> str:
         return MAT_TRANS_DICT.get(material)
     except Exception:
         return ''
-
-
+    
+def material_group_create(sd=SD_MAP_DF) -> dict:
+    """creates material group"""
+    material_cat_dict = {}
+    #clear nans
+    sd_map_cat = SD_MAP_DF.copy()
+    sd_map_cat.dropna(subset=['Material - Key'], inplace=True)
+    # so inefficient...
+    print('Building material group dictionary')
+    for ix, rw in sd_map_cat.iterrows():
+        material_cat_dict[rw['Material - Key']] = rw['Material group']
+    return material_cat_dict
 
 # Create/clear destination folder
 fs.clear_destination_folder()
@@ -242,6 +253,7 @@ fs.clear_destination_folder()
 xlsx_file = FS_FILE_DICT.get('ECCInv')
 SF_ACCT_INFO = pd.read_csv(FS_FILE_DICT.get('SFAcct'))
 MAT_TRANS_DICT = material_translate_create()
+MAT_GROUP_DICT = material_group_create()
 
 # build dictionary because i don't know how to do this right
 SF_ACCT_INFO_DICT = {}
@@ -270,6 +282,9 @@ xdf.loc[(xdf['Contract Desc.'].isnull()),
 # because there are / in this field
 xdf['Contract Desc.'] = xdf['Contract Desc.']\
                         .apply(lambda x: x.replace('/', '-'))
+# add category
+xdf['Material Group'] = xdf['Material']\
+                        .apply(lambda x: MAT_GROUP_DICT.get(x))
 
 agy = xdf.copy()
 # fill in a date for nonbillable, picks up date from first instance

@@ -11,7 +11,7 @@
   }
   :root {
     --ink: #1c2330; --muted: #5b6472; --rule: #d4d9e0;
-    --accent: #1f4e5f; --band: #f2f4f7; --dept: #e8edf0;
+    --accent: #1f4e5f; --band: #f2f4f7; --dept: #e8edf0; --zebra: #f7f9fa;
   }
   * { box-sizing: border-box; }
   body { font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; color: var(--ink); font-size: 10.5pt; line-height: 1.45; margin: 0; }
@@ -24,27 +24,39 @@
   .label { font-size: 8pt; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); margin-bottom: 1px; }
   .value { font-size: 11pt; font-weight: 600; }
   .meta .stack { margin-bottom: 10px; }
+
+  /* summary-first panel */
+  .summary { width: 100%; border: 1px solid var(--rule); border-collapse: collapse; margin-bottom: 22px; break-inside: avoid; }
+  .summary td { vertical-align: top; padding: 14px 16px; }
+  .sum-left { width: 36%; background: var(--accent); color: #fff; }
+  .sum-caption { font-size: 8.5pt; letter-spacing: 0.08em; text-transform: uppercase; color: #cfe0e4; }
+  .sum-total { font-size: 22pt; font-weight: 700; margin-top: 2px; font-variant-numeric: tabular-nums; }
+  .sum-right { background: var(--band); }
+  .sum-breakdown { width: 100%; border-collapse: collapse; }
+  .sum-breakdown td { padding: 2px 0; font-size: 9.5pt; border: none; }
+  .sum-breakdown .sum-amt { text-align: right; color: var(--muted); font-variant-numeric: tabular-nums; }
+
   table.lines { width: 100%; border-collapse: collapse; }
   table.lines thead th {
     background: var(--band); text-align: left; font-size: 8.5pt; letter-spacing: 0.04em;
     text-transform: uppercase; color: var(--muted); padding: 7px 9px; border-bottom: 1px solid var(--rule);
   }
+  table.lines thead th.num { text-align: right; }
   table.lines td { padding: 7px 9px; border-bottom: 1px solid var(--rule); vertical-align: top; }
+  table.lines tr { break-inside: avoid; }
   .num { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+
+  tr.dept-head { break-after: avoid; }
   tr.dept-head td {
     background: var(--dept); font-weight: 700; font-size: 9pt; letter-spacing: 0.04em;
     text-transform: uppercase; color: var(--accent); padding-top: 9px; padding-bottom: 9px; border-bottom: 1px solid var(--rule);
   }
-  table.lines thead th.num { text-align: right; }
-  /* material group sub-band + subtotal */
-  tr.mg-head td { font-weight: 700; font-size: 8.5pt; letter-spacing: 0.03em; color: var(--accent); padding: 9px 9px 3px 18px; border-bottom: none; }
-  tr.mg-sub td { font-size: 9pt; color: var(--muted); padding: 3px 9px 9px 9px; border-bottom: 1px solid var(--rule); }
-  tr.mg-sub .lbl { text-align: right; }
+  tr.item.alt td { background: var(--zebra); }
   td.svc-cell { padding-left: 18px; }
   .svc { display: block; font-weight: 600; }
   .svcid { display: block; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 9pt; color: var(--muted); letter-spacing: 0.02em; margin-top: 1px; }
-  tr.dept-sub td { border-top: 1px solid var(--rule); font-weight: 700; font-size: 9.5pt; padding-top: 8px; padding-bottom: 8px; }
-  tr.dept-sub .lbl { text-align: right; color: var(--muted); }
+  tr.mg-sub td { font-size: 9pt; color: var(--muted); padding: 3px 9px 9px 9px; border-bottom: 1px solid var(--rule); }
+  tr.mg-sub .lbl { text-align: right; }
   .total-row td { border-top: 2px solid var(--accent); border-bottom: none; font-weight: 700; font-size: 11.5pt; padding-top: 11px; }
   .total-row .lbl { text-align: right; color: var(--muted); font-weight: 600; }
   .footnote { margin-top: 26px; font-size: 8.5pt; color: var(--muted); border-top: 1px solid var(--rule); padding-top: 8px; }
@@ -73,6 +85,23 @@
     </tr>
   </table>
 
+  <!-- summary-first panel: total + per-group breakdown -->
+  <table class="summary">
+    <tr>
+      <td class="sum-left">
+        <div class="sum-caption">Total Due</div>
+        <div class="sum-total">{{ total }}</div>
+      </td>
+      <td class="sum-right">
+        <table class="sum-breakdown">
+          {% for g in groups %}{% for mg in g["material_groups"] %}
+          <tr><td>{{ mg["material_group"] }}</td><td class="sum-amt">{{ mg["subtotal"] }}</td></tr>
+          {% endfor %}{% endfor %}
+        </table>
+      </td>
+    </tr>
+  </table>
+
   <table class="lines">
     <thead>
       <tr>
@@ -82,12 +111,11 @@
       </tr>
     </thead>
     <tbody>
-      <!--{% for g in groups %}
-      <tr class="dept-head"><td colspan="3">{{ g["department"] }}</td></tr>-->
+      {% for g in groups %}
       {% for mg in g["material_groups"] %}
       <tr class="dept-head"><td colspan="3">{{ mg["material_group"] }}</td></tr>
       {% for r in mg["items"] %}
-      <tr>
+      <tr class="item{% if loop.index is even %} alt{% endif %}">
         <td class="svc-cell"><span class="svc">{{ r["Mat. Description"] }}</span><span class="svcid">{{ r["Service ID"] }}</span></td>
         <td class="num">{{ r["Quantity"] }} {{ r["UoM"] }}</td>
         <td class="num">${{ "{:,.2f}".format(r["Item Breakup"]) }}</td>
@@ -95,8 +123,7 @@
       {% endfor %}
       <tr class="mg-sub"><td colspan="2" class="lbl">{{ mg["material_group"] }} subtotal</td><td class="num">{{ mg["subtotal"] }}</td></tr>
       {% endfor %}
-      <!--<tr class="dept-sub"><td colspan="2" class="lbl">{{ g["department"] }} subtotal</td><td class="num">{{ g["subtotal"] }}</td></tr>
-      {% endfor %}-->
+      {% endfor %}
       <tr class="total-row"><td colspan="2" class="lbl">Total</td><td class="num">{{ total }}</td></tr>
     </tbody>
   </table>

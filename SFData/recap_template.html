@@ -82,10 +82,10 @@
       </tr>
     </thead>
     <tbody>
-      {% for g in groups %}
-      <tr class="dept-head"><td colspan="3">{{ g["department"] }}</td></tr>
+      <!--{% for g in groups %}
+      <tr class="dept-head"><td colspan="3">{{ g["department"] }}</td></tr>-->
       {% for mg in g["material_groups"] %}
-      <tr class="mg-head"><td colspan="3">{{ mg["material_group"] }}</td></tr>
+      <tr class="dept-head"><td colspan="3">{{ mg["material_group"] }}</td></tr>
       {% for r in mg["items"] %}
       <tr>
         <td class="svc-cell"><span class="svc">{{ r["Mat. Description"] }}</span><span class="svcid">{{ r["Service ID"] }}</span></td>
@@ -95,8 +95,8 @@
       {% endfor %}
       <tr class="mg-sub"><td colspan="2" class="lbl">{{ mg["material_group"] }} subtotal</td><td class="num">{{ mg["subtotal"] }}</td></tr>
       {% endfor %}
-      <tr class="dept-sub"><td colspan="2" class="lbl">{{ g["department"] }} subtotal</td><td class="num">{{ g["subtotal"] }}</td></tr>
-      {% endfor %}
+      <!--<tr class="dept-sub"><td colspan="2" class="lbl">{{ g["department"] }} subtotal</td><td class="num">{{ g["subtotal"] }}</td></tr>
+      {% endfor %}-->
       <tr class="total-row"><td colspan="2" class="lbl">Total</td><td class="num">{{ total }}</td></tr>
     </tbody>
   </table>

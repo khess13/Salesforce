@@ -283,6 +283,7 @@ def material_group_create(sd=SD_MAP_DF) -> dict:
 fs.clear_destination_folder()
 # Get dependent files
 xlsx_file = FS_FILE_DICT.get('ECCInv')
+costing_file = FS_FILE_DICT.get('Costing')
 SF_ACCT_INFO = pd.read_csv(FS_FILE_DICT.get('SFAcct'))
 MAT_TRANS_DICT = material_translate_create()
 MAT_GROUP_DICT = material_group_create()
@@ -302,6 +303,7 @@ content_version = pd.DataFrame(columns=['Title',
 agy_results_dict = {}
 #### Note: removed loop since now targeting 1 file instead of many ###
 xdf = pd.read_excel(xlsx_file)
+costing_df = pd.read_excel(costing_file)
 # get invoice date for file to fill in for nonbillable
 invoice_date_file = xdf.iloc[0, 4]
 
@@ -317,6 +319,8 @@ xdf['Contract Desc.'] = xdf['Contract Desc.']\
 # add category
 xdf['Material Group'] = xdf['Material']\
                         .apply(lambda x: MAT_GROUP_DICT.get(x))
+# swap external text for service ID where missing
+xdf = service_id_update(costing_df, xdf)
 
 agy = xdf.copy()
 # fill in a date for nonbillable, picks up date from first instance

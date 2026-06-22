@@ -88,6 +88,16 @@ def service_id_update(costing_df, invoice_df) -> pd.DataFrame:
 
     return merged.drop(columns=['_k', 'External Customer Text'])
 
+def collapse_invoice_lines(dirty_df):
+    """Collapse invoice lines that share all of these fields except Quantity and Item Breakup."""
+    group_keys = ['Customer', 'Contract Desc.', 'Invoice', 'Invoiced On',
+              'Material', 'Mat. Description']
+    agg_map = {c: 'first' for c in dirty_df.columns if c not in group_keys}
+    agg_map['Quantity'] = 'sum'
+    agg_map['Item Breakup'] = 'sum'
+    clean_df = dirty_df.groupby(group_keys, as_index=False, dropna=False).agg(agg_map)
+    return clean_df
+
 def make_recap_pdf(line_items, header, out_path):
     """Group one account's lines by material group and write a PDF."""
     line_items = line_items.copy()
@@ -320,8 +330,7 @@ xdf['Contract Desc.'] = xdf['Contract Desc.']\
 xdf['Material Group'] = xdf['Material']\
                         .apply(lambda x: MAT_GROUP_DICT.get(x))
 #sum values to remove duplicate material per customer
-xdf = xdf.groupby(['Customer', 'Contract Desc.', 'Invoice', 'Invoiced On', 'Material', 'Mat. Description'],
-                    as_index=False).agg({'Quantity': 'sum', 'Item Breakup': 'sum'})
+xdf = collapse_invoice_lines(xdf)
 print(xdf.loc[xdf['Customer']=='D100002',['Customer','Mat. Description','Material Group','Service ID']])
 # fill in missing Service IDs with External Customer Text from costing file
 xdf = service_id_update(COSTING_DF, xdf)

@@ -62,7 +62,8 @@ class FileService:
         # BOexport - headcount.xlsx --- run at different time, rm?
         # BOexport - S&D Salesforce - Scheduled.pdf - BO invoices
         # BOexport - SDMap.xlsx - mapping for materials
-        # ECCexport - EXPORT.xlsx - ECC invoice data
+        # ECCexport - EXPORT.xlsx - ECC tcode ZRM419
+        # ECCcosting - costing.xlsx - ECC tcode ZFI_DTO_COSTING
         # SF map for dataloader - agencyservices.sdl
         # SF map for dataloader - hc.sdl
         # SF map for dataloader - contract_services.sdl
@@ -70,7 +71,7 @@ class FileService:
         # SF map for dataloader - dtoservices.sdl
         files_from_data = self.get_files_from_dir()
         files_labeled_from_data = {}
-        if len(files_from_data) == 11:
+        if len(files_from_data) == 12:
             for file in files_from_data:
                 if self.__file_date_checker(file) is False:
                     raise ValueError(f'{file} is stale')
@@ -88,20 +89,8 @@ class FileService:
                     files_labeled_from_data['BOInv'] = file
                 elif 'SDMap' in file:
                     files_labeled_from_data['SDMap'] = file
-                '''
-                elif 'AgencyServices' in file:
-                    files_labeled_from_data['AgencyServices'] = file
-                elif 'agencyservices.sdl' == file:
-                    files_labeled_from_data['agyservSDL'] = file
-                elif 'hc.sdl' == file:
-                    files_labeled_from_data['hcSDL'] = file
-                elif 'contract_services.sdl' == file:
-                    files_labeled_from_data['contractSDL'] = file
-                elif 'pdfimportmap.sdl' == file:
-                    files_labeled_from_data['pdfimportSDL'] = file
-                elif 'dtoservices.sdl' == file:
-                    files_labeled_from_data['dtoSDL'] = file
-                '''
+                elif 'costing' in file:
+                    files_labeled_from_data['Costing'] = file
         else:
             raise ValueError(
                 f'Check Data folder. Count is {str(len(files_from_data))}')
@@ -112,6 +101,8 @@ class FileService:
         if sus_file[-3:] == 'sdl':
             # skip checking these files
             return True
+        elif 'costing' in sus_file:
+            no_of_days = arrow.now().shift(days=-7) #s/b 7
         elif 'extract' in sus_file or 'SDMap' in sus_file:
             no_of_days = arrow.now().shift(days=-200) #s/b 90
         else:

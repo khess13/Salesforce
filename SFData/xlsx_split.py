@@ -61,6 +61,42 @@ _TEMPLATE_PATH = os.path.join(os.path.dirname(__file__), "recap_template.html")
 with open(_TEMPLATE_PATH, encoding="utf-8") as _f:
     RECAP_TEMPLATE = Template(_f.read())
 
+def service_id_update(costing_df, invoice_df) -> pd.DataFrame:
+    """Fill blank invoice Service IDs from costing 'External Text',
+    matched on Customer + Material."""
+    invoice_df = invoice_df.copy()
+
+    def key(series):
+        # normalize so 1000 / "1000" / "1000.0" all match
+        return (series.astype(str).str.strip()
+                      .str.replace(r'\.0+$', '', regex=True))
+
+    # composite match key on both sides (doesn't touch the original columns)
+    invoice_df['_k'] = key(invoice_df['Customer']) + '|' + key(invoice_df['Material'])
+
+    fill = costing_df.copy()
+    fill['_k'] = key(fill['Customer']) + '|' + key(fill['Material'])
+    fill = (fill.dropna(subset=['External Text'])
+                .drop_duplicates(subset='_k')[['_k', 'External Text']])
+
+    merged = invoice_df.merge(fill, on='_k', how='left')
+
+    # fill ONLY where Service ID is blank
+    blank = merged['Service ID'].isna() | \
+            (merged['Service ID'].astype(str).str.strip() == '')
+    merged.loc[blank, 'Service ID'] = merged.loc[blank, 'External Text']
+
+    return merged.drop(columns=['_k', 'External Text'])
+
+def collapse_invoice_lines(dirty_df):
+    """Collapse invoice lines that share all of these fields except Quantity and Item Breakup."""
+    group_keys = ['Customer', 'Contract Desc.', 'Invoice', 'Invoiced On',
+              'Material', 'Mat. Description']
+    agg_map = {c: 'first' for c in dirty_df.columns if c not in group_keys}
+    agg_map['Quantity'] = 'sum'
+    agg_map['Item Breakup'] = 'sum'
+    clean_df = dirty_df.groupby(group_keys, as_index=False, dropna=False).agg(agg_map)
+    return clean_df
 
 def make_recap_pdf(line_items, header, out_path):
     """Group one account's lines by material group and write a PDF."""
@@ -250,13 +286,21 @@ def material_group_create(sd=SD_MAP_DF) -> dict:
     # so inefficient...
     print('Building material group dictionary')
     for ix, rw in sd_map_cat.iterrows():
-        material_cat_dict[rw['Material - Key']] = rw['Material group']
+        material_cat_dict[norm_material(rw['Material - Key'])] = rw['Material group']
     return material_cat_dict
+
+def norm_material(value):
+    """1000 / 1000.0 / '1000' all -> '1000'; non-numeric codes pass through trimmed"""
+    num = pd.to_numeric(value, errors='coerce')
+    return str(int(round(num))) if pd.notna(num) else str(value).strip()
 
 # Create/clear destination folder
 fs.clear_destination_folder()
 # Get dependent files
 xlsx_file = FS_FILE_DICT.get('ECCInv')
+costing_file = FS_FILE_DICT.get('Costing')
+xdf = pd.read_excel(xlsx_file, dtype={'Material': str})
+costing_df = pd.read_excel(costing_file, dtype={'Material': str})
 SF_ACCT_INFO = pd.read_csv(FS_FILE_DICT.get('SFAcct'))
 MAT_TRANS_DICT = material_translate_create()
 MAT_GROUP_DICT = material_group_create()
@@ -275,9 +319,9 @@ content_version = pd.DataFrame(columns=['Title',
 
 agy_results_dict = {}
 #### Note: removed loop since now targeting 1 file instead of many ###
-xdf = pd.read_excel(xlsx_file)
+# xdf = pd.read_excel(xlsx_file)
 # get invoice date for file to fill in for nonbillable
-invoice_date_file = xdf.iloc[0, 4]
+invoice_date_file = xdf['Invoiced On'].iloc[0]
 
 ''' data wrangling '''
 # convert customer number to str
@@ -290,9 +334,15 @@ xdf['Contract Desc.'] = xdf['Contract Desc.']\
                         .apply(lambda x: x.replace('/', '-'))
 # add category
 xdf['Material Group'] = xdf['Material']\
-                        .apply(lambda x: MAT_GROUP_DICT.get(x))
+                        .apply(lambda x: MAT_GROUP_DICT.get(norm_material(x)))
+
+#sum values to remove duplicate material per customer
+xdf = collapse_invoice_lines(xdf)
+# fill in missing Service IDs with External Text from costing file
+xdf = service_id_update(costing_df, xdf)
 
 agy = xdf.copy()
+
 # fill in a date for nonbillable, picks up date from first instance
 # agy.loc[(agy['Invoice Date'].isnull()),
 #        'Invoice Date'] = agy.iloc[0,4]
@@ -365,7 +415,7 @@ for agyc in agycodes:
 
             # there's so much missing data now multiple columns  6/2026
             # reinstating line 300, have to replace /'s b/c line breaks
-            customername = sub2df.iloc[0,1]
+            customername = sub2df['Customer Name'].iloc[0]
             customername = customername.replace("/", "")
             
             # file identifiers

@@ -319,6 +319,10 @@ xdf['Material Group'] = xdf['Material']\
                         .apply(lambda x: MAT_GROUP_DICT.get(x))
 
 agy = xdf.copy()
+
+chk = xdf['Service ID'].astype(str).str.contains("EXPECTED_TEXT", na=False)
+print(xdf.loc[chk, ['Customer', 'Material', 'Invoice', 'Invoiced On', 'Item Breakup', 'Service ID']])
+
 # fill in a date for nonbillable, picks up date from first instance
 # agy.loc[(agy['Invoice Date'].isnull()),
 #        'Invoice Date'] = agy.iloc[0,4]

@@ -62,7 +62,7 @@ with open(_TEMPLATE_PATH, encoding="utf-8") as _f:
     RECAP_TEMPLATE = Template(_f.read())
 
 def service_id_update(costing_df, invoice_df) -> pd.DataFrame:
-    """Fill blank invoice Service IDs from costing 'External Customer Text',
+    """Fill blank invoice Service IDs from costing 'External Text',
     matched on Customer + Material."""
     invoice_df = invoice_df.copy()
 
@@ -76,17 +76,17 @@ def service_id_update(costing_df, invoice_df) -> pd.DataFrame:
 
     fill = costing_df.copy()
     fill['_k'] = key(fill['Customer']) + '|' + key(fill['Material'])
-    fill = (fill.dropna(subset=['External Customer Text'])
-                .drop_duplicates(subset='_k')[['_k', 'External Customer Text']])
+    fill = (fill.dropna(subset=['External Text'])
+                .drop_duplicates(subset='_k')[['_k', 'External Text']])
 
     merged = invoice_df.merge(fill, on='_k', how='left')
 
     # fill ONLY where Service ID is blank
     blank = merged['Service ID'].isna() | \
             (merged['Service ID'].astype(str).str.strip() == '')
-    merged.loc[blank, 'Service ID'] = merged.loc[blank, 'External Customer Text']
+    merged.loc[blank, 'Service ID'] = merged.loc[blank, 'External Text']
 
-    return merged.drop(columns=['_k', 'External Customer Text'])
+    return merged.drop(columns=['_k', 'External Text'])
 
 def collapse_invoice_lines(dirty_df):
     """Collapse invoice lines that share all of these fields except Quantity and Item Breakup."""
@@ -333,7 +333,7 @@ xdf['Material Group'] = xdf['Material']\
 # debugging
 # what costing actually has for this customer
 print(costing_df.loc[costing_df['Customer'].astype(str).str.strip() == 'D100002',
-                     ['Customer', 'Material', 'External Customer Text']])
+                     ['Customer', 'Material', 'External Text']])
 
 # what the invoice has for the same customer
 print(xdf.loc[xdf['Customer'] == 'D100002',
@@ -342,7 +342,7 @@ print(xdf.loc[xdf['Customer'] == 'D100002',
 #sum values to remove duplicate material per customer
 xdf = collapse_invoice_lines(xdf)
 print(xdf.loc[xdf['Customer']=='D100002',['Customer','Mat. Description','Material Group','Service ID', 'Item Breakup']])
-# fill in missing Service IDs with External Customer Text from costing file
+# fill in missing Service IDs with External Text from costing file
 xdf = service_id_update(costing_df, xdf)
 print(xdf.loc[xdf['Customer']=='D100002',['Customer','Mat. Description','Material Group','Service ID','Item Breakup']])
 

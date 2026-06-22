@@ -322,6 +322,7 @@ xdf['Material Group'] = xdf['Material']\
 #sum values to remove duplicate material per customer
 xdf = xdf.groupby(['Customer', 'Contract Desc.', 'Invoice', 'Invoiced On', 'Material', 'Mat. Description'],
                     as_index=False).agg({'Quantity': 'sum', 'Item Breakup': 'sum'})
+print(xdf.loc[xdf['Customer']=='D100002',['Customer','Mat. Description','Material Group','Service ID']])
 # fill in missing Service IDs with External Customer Text from costing file
 xdf = service_id_update(COSTING_DF, xdf)
 print(xdf.loc[xdf['Customer']=='D100002',['Customer','Mat. Description','Material Group','Service ID']])

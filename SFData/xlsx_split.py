@@ -321,6 +321,7 @@ xdf['Material Group'] = xdf['Material']\
                         .apply(lambda x: MAT_GROUP_DICT.get(x))
 # fill in missing Service IDs with External Customer Text from costing file
 xdf = service_id_update(COSTING_DF, xdf)
+print(xdf.loc[xdf['Customer']=='D100002',['Customer','Mat. Description','Material Group','Service ID']])
 
 agy = xdf.copy()
 

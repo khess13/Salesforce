@@ -283,6 +283,8 @@ def material_group_create(sd=SD_MAP_DF) -> dict:
 fs.clear_destination_folder()
 # Get dependent files
 xlsx_file = FS_FILE_DICT.get('ECCInv')
+costing_file = FS_FILE_DICT.get('Costing')
+COSTING_DF = pd.read_excel(costing_file)
 SF_ACCT_INFO = pd.read_csv(FS_FILE_DICT.get('SFAcct'))
 MAT_TRANS_DICT = material_translate_create()
 MAT_GROUP_DICT = material_group_create()
@@ -317,12 +319,10 @@ xdf['Contract Desc.'] = xdf['Contract Desc.']\
 # add category
 xdf['Material Group'] = xdf['Material']\
                         .apply(lambda x: MAT_GROUP_DICT.get(x))
+# fill in missing Service IDs with External Customer Text from costing file
+xdf = service_id_update(COSTING_DF, xdf)
 
 agy = xdf.copy()
-
-chk = (xdf['Customer'].astype(str).str.strip() == "D100002") & \
-      (xdf['Material'].astype(str).str.strip().str.replace(r'\.0+$','',regex=True) == "PUT_MATERIAL_HERE")
-print(xdf.loc[chk, ['Customer', 'Material', 'Invoice', 'Invoiced On', 'Item Breakup', 'Service ID']])
 
 # fill in a date for nonbillable, picks up date from first instance
 # agy.loc[(agy['Invoice Date'].isnull()),

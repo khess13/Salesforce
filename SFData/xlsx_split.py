@@ -316,7 +316,7 @@ agy_results_dict = {}
 #### Note: removed loop since now targeting 1 file instead of many ###
 # xdf = pd.read_excel(xlsx_file)
 # get invoice date for file to fill in for nonbillable
-invoice_date_file = xdf.iloc[0, 4]
+invoice_date_file = xdf['Invoiced On'].iloc[0]
 
 ''' data wrangling '''
 # convert customer number to str
@@ -420,7 +420,7 @@ for agyc in agycodes:
 
             # there's so much missing data now multiple columns  6/2026
             # reinstating line 300, have to replace /'s b/c line breaks
-            customername = sub2df.iloc[0,1]
+            customername = sub2df['Customer Name'].iloc[0]
             customername = customername.replace("/", "")
             
             # file identifiers

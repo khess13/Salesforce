@@ -61,6 +61,15 @@ _TEMPLATE_PATH = os.path.join(os.path.dirname(__file__), "recap_template.html")
 with open(_TEMPLATE_PATH, encoding="utf-8") as _f:
     RECAP_TEMPLATE = Template(_f.read())
 
+def service_id_update(costing_df, invoice_df) -> pd.DataFrame:
+    """grabs data from costing reporting for blank service IDs"""
+    subset_df = costing_df.loc[costing_df['Service ID'].isna(),\
+                                        ['Customer', 'Material',
+                                        'External Customer Text']].copy()
+    subset_df = subset_df.rename(columns={'External Customer Text':'Service ID'})
+    new_invoice_df = pd.merge(invoice_df, costing_df[['Customer','Material', 
+                                                      'Service ID']])
+    return new_invoice_df
 
 def make_recap_pdf(line_items, header, out_path):
     """Group one account's lines by material group and write a PDF."""

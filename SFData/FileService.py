@@ -62,7 +62,8 @@ class FileService:
         # BOexport - headcount.xlsx --- run at different time, rm?
         # BOexport - S&D Salesforce - Scheduled.pdf - BO invoices
         # BOexport - SDMap.xlsx - mapping for materials
-        # ECCexport - EXPORT.xlsx - ECC invoice data
+        # ECCexport - EXPORT.xlsx - ECC tcode ZRM419
+        # ECCcosting - costing.xlsx - ECC tcode ZFI_DTO_COSTING
         # SF map for dataloader - agencyservices.sdl
         # SF map for dataloader - hc.sdl
         # SF map for dataloader - contract_services.sdl
@@ -88,20 +89,8 @@ class FileService:
                     files_labeled_from_data['BOInv'] = file
                 elif 'SDMap' in file:
                     files_labeled_from_data['SDMap'] = file
-                '''
-                elif 'AgencyServices' in file:
-                    files_labeled_from_data['AgencyServices'] = file
-                elif 'agencyservices.sdl' == file:
-                    files_labeled_from_data['agyservSDL'] = file
-                elif 'hc.sdl' == file:
-                    files_labeled_from_data['hcSDL'] = file
-                elif 'contract_services.sdl' == file:
-                    files_labeled_from_data['contractSDL'] = file
-                elif 'pdfimportmap.sdl' == file:
-                    files_labeled_from_data['pdfimportSDL'] = file
-                elif 'dtoservices.sdl' == file:
-                    files_labeled_from_data['dtoSDL'] = file
-                '''
+                elif 'costing.xlsx' in file:
+                    files_labeled_from_data['Costing'] = file
         else:
             raise ValueError(
                 f'Check Data folder. Count is {str(len(files_from_data))}')

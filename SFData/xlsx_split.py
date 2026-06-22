@@ -343,7 +343,7 @@ print(xdf.loc[xdf['Customer'] == 'D100002',
 xdf = collapse_invoice_lines(xdf)
 print(xdf.loc[xdf['Customer']=='D100002',['Customer','Mat. Description','Material Group','Service ID', 'Item Breakup']])
 # fill in missing Service IDs with External Customer Text from costing file
-xdf = service_id_update(COSTING_DF, xdf)
+xdf = service_id_update(costing_df, xdf)
 print(xdf.loc[xdf['Customer']=='D100002',['Customer','Mat. Description','Material Group','Service ID','Item Breakup']])
 
 agy = xdf.copy()

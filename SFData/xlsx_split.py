@@ -324,6 +324,7 @@ xdf = xdf.groupby(['Customer', 'Contract Desc.', 'Invoice', 'Invoiced On', 'Mate
                     as_index=False).agg({'Quantity': 'sum', 'Item Breakup': 'sum'})
 # fill in missing Service IDs with External Customer Text from costing file
 xdf = service_id_update(COSTING_DF, xdf)
+print(xdf.loc[xdf['Customer']=='D100002',['Customer','Mat. Description','Material Group','Service ID']])
 
 agy = xdf.copy()
 

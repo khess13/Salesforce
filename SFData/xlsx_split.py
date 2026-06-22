@@ -286,8 +286,13 @@ def material_group_create(sd=SD_MAP_DF) -> dict:
     # so inefficient...
     print('Building material group dictionary')
     for ix, rw in sd_map_cat.iterrows():
-        material_cat_dict[rw['Material - Key']] = rw['Material group']
+        material_cat_dict[norm_material(rw['Material - Key'])] = rw['Material group']
     return material_cat_dict
+
+def norm_material(value):
+    """1000 / 1000.0 / '1000' all -> '1000'; non-numeric codes pass through trimmed"""
+    num = pd.to_numeric(value, errors='coerce')
+    return str(int(round(num))) if pd.notna(num) else str(value).strip()
 
 # Create/clear destination folder
 fs.clear_destination_folder()
@@ -329,7 +334,7 @@ xdf['Contract Desc.'] = xdf['Contract Desc.']\
                         .apply(lambda x: x.replace('/', '-'))
 # add category
 xdf['Material Group'] = xdf['Material']\
-                        .apply(lambda x: MAT_GROUP_DICT.get(x))
+                        .apply(lambda x: MAT_GROUP_DICT.get(norm_material(x)))
 # debugging
 # what costing actually has for this customer
 print(costing_df.loc[costing_df['Customer'].astype(str).str.strip() == 'D100002',

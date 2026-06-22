@@ -71,7 +71,7 @@ class FileService:
         # SF map for dataloader - dtoservices.sdl
         files_from_data = self.get_files_from_dir()
         files_labeled_from_data = {}
-        if len(files_from_data) == 11:
+        if len(files_from_data) == 12:
             for file in files_from_data:
                 if self.__file_date_checker(file) is False:
                     raise ValueError(f'{file} is stale')
@@ -89,7 +89,7 @@ class FileService:
                     files_labeled_from_data['BOInv'] = file
                 elif 'SDMap' in file:
                     files_labeled_from_data['SDMap'] = file
-                elif 'costing.xlsx' in file:
+                elif 'costing' in file:
                     files_labeled_from_data['Costing'] = file
         else:
             raise ValueError(

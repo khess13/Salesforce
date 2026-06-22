@@ -12,7 +12,7 @@ MONTH_NAME = TODAY_DATE.strftime("%B")
 
 fs = FileService(ROOT,OUTPUTPATH)
 FS_FILE_DICT = fs.get_dependent_file_dict()
-attachment_location = FS_FILE_DICT.get('ECCInv')
+attachment_location = FS_FILE_DICT.get('Costing')
 
 ans = input(f'Is the current month {MONTH_NAME}? y/n')
 if ans == 'n':

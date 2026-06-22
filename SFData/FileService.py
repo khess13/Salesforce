@@ -101,6 +101,8 @@ class FileService:
         if sus_file[-3:] == 'sdl':
             # skip checking these files
             return True
+        elif 'costing' in sus_file:
+            no_of_days = arrow.now().shift(days=-7) #s/b 7
         elif 'extract' in sus_file or 'SDMap' in sus_file:
             no_of_days = arrow.now().shift(days=-200) #s/b 90
         else:

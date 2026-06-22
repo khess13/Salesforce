@@ -62,14 +62,31 @@ with open(_TEMPLATE_PATH, encoding="utf-8") as _f:
     RECAP_TEMPLATE = Template(_f.read())
 
 def service_id_update(costing_df, invoice_df) -> pd.DataFrame:
-    """grabs data from costing reporting for blank service IDs"""
-    subset_df = costing_df.loc[costing_df['Service ID'].isna(),\
-                                        ['Customer', 'Material',
-                                        'External Customer Text']].copy()
-    subset_df = subset_df.rename(columns={'External Customer Text':'Service ID'})
-    new_invoice_df = pd.merge(invoice_df, costing_df[['Customer','Material', 
-                                                      'Service ID']])
-    return new_invoice_df
+    """Fill blank invoice Service IDs from costing 'External Customer Text',
+    matched on Customer + Material."""
+    invoice_df = invoice_df.copy()
+
+    def key(series):
+        # normalize so 1000 / "1000" / "1000.0" all match
+        return (series.astype(str).str.strip()
+                      .str.replace(r'\.0+$', '', regex=True))
+
+    # composite match key on both sides (doesn't touch the original columns)
+    invoice_df['_k'] = key(invoice_df['Customer']) + '|' + key(invoice_df['Material'])
+
+    fill = costing_df.copy()
+    fill['_k'] = key(fill['Customer']) + '|' + key(fill['Material'])
+    fill = (fill.dropna(subset=['External Customer Text'])
+                .drop_duplicates(subset='_k')[['_k', 'External Customer Text']])
+
+    merged = invoice_df.merge(fill, on='_k', how='left')
+
+    # fill ONLY where Service ID is blank
+    blank = merged['Service ID'].isna() | \
+            (merged['Service ID'].astype(str).str.strip() == '')
+    merged.loc[blank, 'Service ID'] = merged.loc[blank, 'External Customer Text']
+
+    return merged.drop(columns=['_k', 'External Customer Text'])
 
 def make_recap_pdf(line_items, header, out_path):
     """Group one account's lines by material group and write a PDF."""

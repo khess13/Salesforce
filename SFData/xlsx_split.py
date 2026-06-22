@@ -335,21 +335,11 @@ xdf['Contract Desc.'] = xdf['Contract Desc.']\
 # add category
 xdf['Material Group'] = xdf['Material']\
                         .apply(lambda x: MAT_GROUP_DICT.get(norm_material(x)))
-# debugging
-# what costing actually has for this customer
-print(costing_df.loc[costing_df['Customer'].astype(str).str.strip() == 'D100002',
-                     ['Customer', 'Material', 'External Text']])
-
-# what the invoice has for the same customer
-print(xdf.loc[xdf['Customer'] == 'D100002',
-             ['Customer', 'Material', 'Service ID']])
 
 #sum values to remove duplicate material per customer
 xdf = collapse_invoice_lines(xdf)
-print(xdf.loc[xdf['Customer']=='D100002',['Customer','Mat. Description','Material Group','Service ID', 'Item Breakup']])
 # fill in missing Service IDs with External Text from costing file
 xdf = service_id_update(costing_df, xdf)
-print(xdf.loc[xdf['Customer']=='D100002',['Customer','Mat. Description','Material Group','Service ID','Item Breakup']])
 
 agy = xdf.copy()
 

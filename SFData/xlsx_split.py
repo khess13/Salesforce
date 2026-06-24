@@ -91,7 +91,7 @@ def service_id_update(costing_df, invoice_df) -> pd.DataFrame:
 def collapse_invoice_lines(dirty_df):
     """Collapse invoice lines that share all of these fields except Quantity and Item Breakup."""
     group_keys = ['Customer', 'Contract Desc.', 'Invoice', 'Invoiced On',
-              'Material', 'Mat. Description']
+              'Material', 'Mat. Description','Service ID']
     agg_map = {c: 'first' for c in dirty_df.columns if c not in group_keys}
     agg_map['Quantity'] = 'sum'
     agg_map['Item Breakup'] = 'sum'

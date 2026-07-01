@@ -125,6 +125,24 @@ def make_recap_pdf(line_items, header, out_path):
         .agg({"UoM": "first",
               "Quantity": "sum",
               "Item Breakup": "sum"}))
+    
+    # usage summary by material description, rolled up across all groups
+    usage_df = (line_items
+        .groupby("Mat. Description", sort=False, as_index=False)
+        .agg({
+            "UoM": "first",
+            "Quantity": "sum",
+            "Item Breakup": "sum",
+        }))
+    usage_df = usage_df.sort_values("Mat. Description", key=lambda c: c.str.lower())
+    usage_summary = [{
+        "description": r["Mat. Description"],
+        "qty": "{:,.0f}".format(r["Quantity"]),
+        "uom": r["UoM"],
+        "amount": float_format(round(r["Item Breakup"], 2)),
+    } for _, r in usage_df.iterrows()]
+
+    html_str = RECAP_TEMPLATE.render(groups=groups, usage_summary=usage_summary, **header)
 
     # group by material group across the whole invoice, sorted A-Z (case-insensitive)
     groups = []

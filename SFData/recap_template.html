@@ -131,6 +131,23 @@
     </tbody>
   </table>
 
+  <table class="lines grp-table">
+    <colgroup><col class="c1"><col class="c2"><col class="c3"></colgroup>
+    <thead>
+      <tr class="dept-head"><th colspan="3">Usage Summary</th></tr>
+      <tr class="col-head"><th>Service</th><th class="num">Usage</th><th class="num">Amount</th></tr>
+    </thead>
+    <tbody>
+      {% for u in usage_summary %}
+      <tr class="item{% if loop.index is even %} alt{% endif %}">
+        <td class="svc-cell"><span class="svc">{{ u["description"] }}</span></td>
+        <td class="num">{{ u["qty"] }} {{ u["uom"] }}</td>
+        <td class="num">{{ u["amount"] }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
   <p class="footnote">
     This invoice summarizes shared services billed for the period shown above.
     Generated from SAP billing data.

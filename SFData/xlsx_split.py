@@ -125,6 +125,18 @@ def make_recap_pdf(line_items, header, out_path):
         .agg({"UoM": "first",
               "Quantity": "sum",
               "Item Breakup": "sum"}))
+
+    # group by material group across the whole invoice, sorted A-Z (case-insensitive)
+    groups = []
+    for mg_name, mg_df in line_items.groupby("Material Group", sort=False):
+        mg_df = mg_df.sort_values(["Mat. Description", "Service ID"],
+                                  key=lambda c: c.str.lower())
+        groups.append({
+            "material_group": mg_name,
+            "items": mg_df.to_dict(orient="records"),
+            "subtotal": float_format(round(mg_df["Item Breakup"].sum(), 2)),
+        })
+    groups.sort(key=lambda x: str(x["material_group"]).lower())
     
     # usage summary by material description, rolled up across all groups
     usage_df = (line_items
@@ -143,20 +155,6 @@ def make_recap_pdf(line_items, header, out_path):
     } for _, r in usage_df.iterrows()]
 
     html_str = RECAP_TEMPLATE.render(groups=groups, usage_summary=usage_summary, **header)
-
-    # group by material group across the whole invoice, sorted A-Z (case-insensitive)
-    groups = []
-    for mg_name, mg_df in line_items.groupby("Material Group", sort=False):
-        mg_df = mg_df.sort_values(["Mat. Description", "Service ID"],
-                                  key=lambda c: c.str.lower())
-        groups.append({
-            "material_group": mg_name,
-            "items": mg_df.to_dict(orient="records"),
-            "subtotal": float_format(round(mg_df["Item Breakup"].sum(), 2)),
-        })
-    groups.sort(key=lambda x: str(x["material_group"]).lower())
-
-    html_str = RECAP_TEMPLATE.render(groups=groups, **header)
     HTML(string=html_str).write_pdf(out_path)
 
 

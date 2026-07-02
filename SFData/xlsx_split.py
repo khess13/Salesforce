@@ -431,7 +431,7 @@ for agyc in agycodes:
 
             # there's so much missing data now multiple columns  6/2026
             # reinstating line 300, have to replace /'s b/c line breaks
-            customername = sub2df['Customer Name'].iloc[0]
+            customername = sub3df['Customer Name'].iloc[0]
             customername = customername.replace("/", "")
             
             # file identifiers

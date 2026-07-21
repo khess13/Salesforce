@@ -155,7 +155,7 @@ def make_recap_pdf(line_items, header, out_path):
     } for _, r in usage_df.iterrows()]
 
     html_str = RECAP_TEMPLATE.render(groups=groups, usage_summary=usage_summary, **header)
-    HTML(string=html_str).write_pdf(out_path)
+    HTML(string=html_str, base_url=ROOT).write_pdf(out_path)
 
 
 # helper functions

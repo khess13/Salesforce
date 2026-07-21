@@ -4,17 +4,18 @@
 <meta charset="utf-8">
 <title>Shared Services Billing</title>
 <style>
+  @import url('https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&display=swap');
   @page {
     size: Letter;
     margin: 0.9in 0.85in;
     @bottom-right { content: "Page " counter(page) " of " counter(pages); font-size: 8pt; color: #888; }
   }
   :root {
-    --ink: #1c2330; --muted: #5b6472; --rule: #d4d9e0;
-    --accent: #1f4e5f; --band: #f2f4f7; --dept: #e8edf0; --zebra: #f7f9fa;
+    --ink: #14181f; --muted: #44494f; --rule: #d4d9e0;
+    --accent: #003C71; --band: #eef2f6; --dept: #e3e9ee; --zebra: #f7f9fa;
   }
   * { box-sizing: border-box; }
-  body { font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; color: var(--ink); font-size: 10.5pt; line-height: 1.45; margin: 0; }
+  body { font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif; color: var(--ink); font-size: 10.5pt; line-height: 1.45; margin: 0; }
   .masthead { border-bottom: 2px solid var(--accent); padding-bottom: 12px; margin-bottom: 18px; }
   .org { font-size: 8.5pt; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin: 0 0 2px 0; }
   .doc-title { font-size: 18pt; font-weight: 700; margin: 0; color: var(--accent); }
@@ -28,7 +29,7 @@
   /* summary-first panel */
   .summary { width: 100%; border: 1px solid var(--rule); border-collapse: collapse; margin-bottom: 22px; break-inside: avoid; }
   .summary td { vertical-align: top; padding: 14px 16px; }
-  .sum-left { width: 36%; background: var(--band); border-right: 1px solid var(--rule); }
+  .sum-left { width: 36%; background: var(--band); border-right: 1px solid var(--rule); border-left: 3px solid #0072CE; }
   .sum-caption { font-size: 8.5pt; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
   .sum-total { font-size: 22pt; font-weight: 700; margin-top: 2px; color: var(--accent); font-variant-numeric: tabular-nums; }
   .sum-right { background: #fff; }
